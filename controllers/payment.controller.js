@@ -6,6 +6,7 @@ import Transaction from '../models/transaction.model.js';
 import { processWebhookEvent } from '../utils/paymentHelper.js';
 
 
+
 const PAYSTACK_SECRET = "sk_test_b4ecf231f7a4b52f2c5f933b5f5584e1d8dc9321";  //my test key not real right now
 if (!PAYSTACK_SECRET) {
     // Fail fast so developers know to set the env var
@@ -88,7 +89,7 @@ export async function initializePayment(req, res) {
 
 
        let reseller = null;
-
+       console.log("Reseller Code received:", resellerCode);
        if(resellerCode){
         reseller = await User.findOne({ resellerCode})
 
@@ -175,15 +176,25 @@ export async function initializePayment(req, res) {
             reference: reference
         };
 
+
+    //    if (callback_url){
+    //     payload.callback_url = `${callback_url}?reference=${reference}`
+    //    }
+
+
+        //  commented this out
+        //This automatically appends the reference to the callback url paystack does that naturally for us haha 
         if (callback_url) payload.callback_url = callback_url;
 
         // 5. Initialize payment via Paystack
         const { data } = await paystack.post('/transaction/initialize', payload);
-
+        
         return res.status(200).json({
             status: true,
             message: "Payment initialized",
-            data
+            data,
+            
+
         });
 
     } catch (err) {

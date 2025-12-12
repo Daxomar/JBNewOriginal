@@ -157,3 +157,48 @@ export const generateOTPEmailTemplate = ({
     </table>
 </div>
 `;
+
+
+
+
+
+
+
+
+//TRANSACTION RECEIPT EMAIL TEMPLATE
+export const generateTransactionReceiptTemplate = ({
+  userName,
+  amount,
+  bundleName,
+  reference,
+  date,
+  phoneNumber,
+  paymentMethod,
+}) => {
+  return `
+    <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+      <h2 style="color: #0066ff;">JoyBundle - Payment Receipt</h2>
+
+      <p>Hello ${userName || "Customer"},</p>
+      <p>
+        Your purchase was successful! Below is your payment receipt.
+      </p>
+
+      <div style="background:#f7f7f7; padding: 15px; border-radius: 8px; margin-top: 10px;">
+        <h3>Transaction Details</h3>
+        <p><strong>Bundle:</strong> ${bundleName}</p>
+        <p><strong>Amount Paid:</strong> GHS ${amount}</p>
+        <p><strong>Phone Number:</strong> ${phoneNumber}</p>
+        <p><strong>Payment Method:</strong> ${paymentMethod}</p>
+        <p><strong>Reference:</strong> ${reference}</p>
+        <p><strong>Date:</strong> ${date}</p>
+      </div>
+
+      <p style="margin-top: 20px;">
+        If you have any issues, reply to this email or contact support.
+      </p>
+
+      <p>Thanks for choosing JoyBundle! 🎉</p>
+    </div>
+  `;
+};

@@ -1,11 +1,11 @@
-import { generateWelcomeEmailTemplate, generateOTPEmailTemplate } from "./email-template.js";
-import { accountEmail,  SendRemindertransporter, Welcometransporter, OTPtransporter } from "../config/nodemailer.js";
+import { generateWelcomeEmailTemplate, generateOTPEmailTemplate, generateTransactionReceiptTemplate } from "./email-template.js";
+import { accountEmail,  SendRemindertransporter, Welcometransporter, OTPtransporter, transactionReceiptTransporter } from "../config/nodemailer.js";
 import dayjs from 'dayjs';
 
 
 
 
-
+//WELCOME EMAIL FUNCTION
 export const sendWelcomeEmail = async ({ to, userName }) => {
   if (!to) throw new Error('Email address is required');
   
@@ -33,6 +33,10 @@ export const sendWelcomeEmail = async ({ to, userName }) => {
 
 
 
+
+
+
+// OTP EMAIL FUNCTION 
 export const sendOTPEmail = async ({ to, userName, otpCode, expiryMinutes }) => {
   if (!to || !otpCode) throw new Error('Email and OTP code are required');
   
@@ -54,6 +58,49 @@ export const sendOTPEmail = async ({ to, userName, otpCode, expiryMinutes }) => 
     return info;
   } catch (error) {
     console.error('Error sending OTP email:', error);
+    throw error;
+  }
+};
+
+
+
+
+
+
+// TRANSACTION RECEIPT EMAIL FUNCTION
+export const sendTransactionReceiptEmail = async ({
+  to,
+  userName,
+  amount,
+  bundleName,
+  reference,
+  date,
+  phoneNumber,
+  paymentMethod,
+}) => {
+  if (!to) throw new Error("Email address is required");
+
+  const mailOptions = {
+    from: accountEmail,
+    to,
+    subject: "JoyBundle Payment Receipt ✔",
+    html: generateTransactionReceiptTemplate({
+      userName,
+      amount,
+      bundleName,
+      reference,
+      date,
+      phoneNumber,
+      paymentMethod,
+    }),
+  };
+
+  try {
+    const info = await transactionReceiptTransporter.sendMail(mailOptions);
+    console.log("Receipt email sent successfully");
+    return info;
+  } catch (error) {
+    console.error("Error sending receipt email:", error);
     throw error;
   }
 };

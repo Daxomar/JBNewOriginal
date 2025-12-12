@@ -1,10 +1,11 @@
 import User from '../models/user.model.js';
 import Transaction from '../models/transaction.model.js';
 import Commission from '../models/commission.model.js';
+import {  sendTransactionReceiptEmail } from "../utils/send-email.js";
 
 // Separate async function for processing and Creating Transaction in DB
 export async function processWebhookEvent(event) {
-    const { reference, status, channel, metadata } = event.data;
+    const { reference, status, channel, metadata, paid_at  } = event.data;
 
     // Find the pending transaction
     const transaction = await Transaction.findOne({ reference });
@@ -31,6 +32,18 @@ if (event.event === 'charge.success') {
     };
     
     await transaction.save();
+
+
+     await sendTransactionReceiptEmail ({
+                to: transaction.email,
+            
+                amount: transaction.amount,
+                bundleName: transaction.bundleName,
+                reference: reference,
+                date: paid_at,
+                phoneNumber: transaction.metadata.phoneNumberReceivingData,
+                paymentMethod: channel,
+            })
 
     // ✅ Commission logic - only after payment confirmed
     if (transaction.resellerCode && transaction.metadata?.resellerProfit) {

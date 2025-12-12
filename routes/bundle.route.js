@@ -7,6 +7,12 @@ const bundleRouter = Router();
 bundleRouter.post('/createBundleInDb', createBundleInDb )
 
 // GET BUNDLE TYPES FROM DB
-bundleRouter.post('/getBundleFromDb', getAllBundles )
+bundleRouter.get('/getBundleFromDb', getAllBundles )
 
 export default bundleRouter;
+
+
+
+
+
+

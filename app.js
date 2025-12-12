@@ -2,10 +2,13 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import { PORT } from './config/env.js';
 import cors from 'cors'
+
+//ROUTERS
 import userRouter from './routes/user.routes.js'
 import authRouter from './routes/auth.routes.js';
 import paymentRouter from './routes/payment.route.js';
 import bundleRouter from './routes/bundle.route.js';
+import orderRouter from './routes/order.route.js';
 
 import connectToDatabase from './database/mongodb.js';
 import errorMiddleware from './middlewares/error.middleware.js';
@@ -16,8 +19,8 @@ const app = express();
 
 // CORS configuration - MUST be before other middlewares
 const allowedOrigins = [
-  "https://0a0c250b8682.ngrok-free.app",
-  "https://f75f502c0403.ngrok-free.app",
+  "https://7b4b6edf4d89.ngrok-free.app",
+  "https://2c8186ee0c04.ngrok-free.app",
   "http://localhost:3000",
   "http://localhost:5000"
 ];
@@ -42,12 +45,61 @@ app.use(cors({
     "Authorization",
     "X-Requested-With",
     "Accept",
-    "Origin"
+    "Origin",
+    "ngrok-skip-browser-warning"
 
   ],
   exposedHeaders: ["Set-Cookie"],
   optionsSuccessStatus: 200 // Some legacy browsers choke on 204
 }));
+
+
+
+
+
+
+// const allowedOrigins = [
+//   "http://localhost:3000",
+//   "http://localhost:5000",
+// ];
+
+// app.use(cors({
+//   origin: function (origin, callback) {
+//     if (!origin) return callback(null, true);
+
+//     if (
+//       allowedOrigins.includes(origin) ||
+//       origin.includes("ngrok-free.app") // allow any NGROK tunnels
+//     ) {
+//       return callback(null, true);
+//     }
+
+//     console.log("CORS blocked origin:", origin);
+//     callback(new Error(`Origin ${origin} not allowed by CORS`));
+//   },
+
+//   credentials: true,
+//   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+//   allowedHeaders: [
+//     "Content-Type",
+//     "Authorization",
+//     "X-Requested-With",
+//     "Accept",
+//     "Origin",
+//     "ngrok-skip-browser-warning"
+//   ],
+//   exposedHeaders: ["Set-Cookie"],
+//   optionsSuccessStatus: 200
+// }));
+
+
+
+
+
+
+
+
+
 
 
 
@@ -103,6 +155,7 @@ app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/payments', paymentRouter);
 app.use('/api/v1/bundles', bundleRouter);
+app.use('/api/v1/order', orderRouter);
 
 
 

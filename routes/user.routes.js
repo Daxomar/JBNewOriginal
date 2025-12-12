@@ -1,7 +1,7 @@
 import  { Router} from 'express';
 
 import  { authorize,  authorizeRoles,  protect,  userAuthCookie,   } from '../middlewares/auth.middleware.js'
-import {getUsers, getUser, creatAccountByAdmin} from '../controllers/user.controller.js'
+import { creatAccountByAdmin, getReseller, getResellers, resellerLink, getResellerCommission} from '../controllers/user.controller.js'
 
 const userRouter = Router();
 
@@ -14,14 +14,22 @@ const userRouter = Router();
 
 
 //ADMIN ENDPOINT
-userRouter.get('/', protect, authorizeRoles("admin"),  getUsers);    // I have to later add the admin authorization middleWare over here too later for strict acces
+userRouter.get('/', protect, authorizeRoles("admin"),  getResellers);    // I have to later add the admin authorization middleWare over here too later for strict acces
 
 
 //USER ENDPOINT
-userRouter.get('/me', protect, getUser);  
+userRouter.get('/me', protect, getReseller);  
+
+//CUSTOMER ENDPOINT PUBLIC 
+userRouter.get('/public/commission/:resellerCode', getResellerCommission);
 
 
-userRouter.get('/:id', protect, authorizeRoles("admin"), getUser);  //I added the right authorization middleware over here
+//RESSELLER LINK ENDPOINT
+userRouter.get('/reseller-link', resellerLink)
+
+//ADMIN GET RESELLER ENDPOINT
+userRouter.get('/:id', protect, authorizeRoles("admin"), getReseller);  //I added the right authorization middleware over here
+
 
 
 //ADMIN ENDPOINT

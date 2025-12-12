@@ -1,7 +1,10 @@
+import Commission from '../models/commission.model.js';
 import User from '../models/user.model.js'
+import { nanoid } from "nanoid";
 
 
-export const getUser = async (req, res, next) => {
+
+export const getReseller = async (req, res, next) => {
 
     try {
         const { id } = req.user
@@ -22,6 +25,10 @@ export const getUser = async (req, res, next) => {
             email: user.email,
             role: user.role,
             isAccountVerified: user.isAccountVerified,
+            resellerCode: user.resellerCode,
+            commissionRate: user.commissionRate,
+            totalCommissionsEarned: user.totalCommissionEarned,
+            totalCommissionsPaidOut: user.totalCommissionPaidOut,
             createdAt: user.createdAt,
         };
 
@@ -51,7 +58,7 @@ export const getUser = async (req, res, next) => {
 
 
 //GET USERS BY ADMIN
-export const getUsers = async (req, res, next) => {
+export const getResellers = async (req, res, next) => {
 
     try {
         const { id, email, role } = req.user;
@@ -284,3 +291,78 @@ export const updateUserByAdmin = async (req, res, next) => {
     }
 
 }
+
+
+
+
+// RESLLER LINK GENERATION
+export const resellerLink = async (req, res, next) => {
+    try {
+    // const userId = req.user.id; // Auth middleware sets this
+
+    const { userId } = req.query; // instead of req.body// for now until i set the middleware properly will manually send the userId in the query string
+
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Generate resellerCode if not exists
+    if (!user.resellerCode || user.resellerCode.trim() === "") {
+
+        const safeName = user.name || "USER";
+      const prefix = safeName.substring(0, 4).toUpperCase(); // first 4 letters
+      user.resellerCode = `${prefix}-${nanoid(6)}`; // e.g., JOHN-a1b2c3
+      await user.save();
+    }
+
+    const referralURL = `http://localhost:3000/buy?resellerCode=${user.resellerCode}`;
+
+    return res.status(200).json({
+      success: true,  
+      message: "Referral link generated successfully",
+      referralURL,
+    });
+  } catch (err) {
+    console.error("Error generating referral link:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+//GET RESELLER COMMISSION PUBLIC ENDPOINT
+export const getResellerCommission = async (req, res) => {
+  try {
+    const { resellerCode } = req.params;
+    
+    console.log("Backend received resellerCode:", resellerCode);
+    // Find reseller by code
+    const reseller = await User.findOne({ 
+      resellerCode: resellerCode,
+    });
+    
+    if (!reseller) {
+      return res.status(404).json({
+        success: false,
+        message: "Reseller not found"
+      });
+    }
+    
+    // Return ONLY commission rate (no sensitive data)
+    return res.status(200).json({
+      success: true,
+      data: {
+        resellerCode: reseller.resellerCode,
+        commissionRate: reseller.commissionRate, // e.g., 0.15 for 15%
+        // Optionally: reseller name for display
+      }
+    });
+    
+  } catch (error) {
+    console.error("Get reseller commission error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch commission rate"
+    });
+  }
+};

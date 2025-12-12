@@ -36,6 +36,17 @@ export const OTPtransporter = nodemailer.createTransport({
   });
 
 
+//This one is for Transaction Receipt Emails
+  export const transactionReceiptTransporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: accountEmail,
+      pass: EMAIL_PASSWORD,
+    },
+  });
+
+
+
 
 
 

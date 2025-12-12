@@ -82,6 +82,17 @@ resellerCode: {
     default: {},
   },
 
+
+
+    // NEW: Delivery tracking
+  deliveryStatus: {
+    type: String,
+    enum: ['pending', 'processing', 'delivered', 'failed'],
+    default: 'pending',
+    index: true
+  },
+  deliveredAt: Date,
+  failureReason: String,
  
 
 
