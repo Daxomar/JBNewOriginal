@@ -7,7 +7,14 @@ import { nanoid } from "nanoid";
 export const getReseller = async (req, res, next) => {
 
     try {
-        const { id } = req.user
+
+        // real usage is this don't forget
+        // const { id } = req.user
+        
+
+        //Manual setting for testing purposes
+        const id = "6939e7a48945df1d67c26f00"
+
         console.log("this is what i am currently debugging", id);
         const user = await User.findById(id).select('-password');
 
@@ -29,6 +36,7 @@ export const getReseller = async (req, res, next) => {
             commissionRate: user.commissionRate,
             totalCommissionsEarned: user.totalCommissionEarned,
             totalCommissionsPaidOut: user.totalCommissionPaidOut,
+            totalSales:user.totalSales,
             createdAt: user.createdAt,
         };
 

@@ -9,10 +9,17 @@ import authRouter from './routes/auth.routes.js';
 import paymentRouter from './routes/payment.route.js';
 import bundleRouter from './routes/bundle.route.js';
 import orderRouter from './routes/order.route.js';
+import commissionRouter from './routes/commission.route.js';
+import payoutRouter from './routes/payout.route.js';
+import transactionRouter from './routes/transaction.route.js';
 
+//DATABASE CONNECTION
 import connectToDatabase from './database/mongodb.js';
+
+//MIDDLEWARES
 import errorMiddleware from './middlewares/error.middleware.js';
 import arcjetMiddleware from './middlewares/arcjet.middleware.js';
+
 
 
 const app = express();
@@ -21,6 +28,7 @@ const app = express();
 const allowedOrigins = [
   "https://7b4b6edf4d89.ngrok-free.app",
   "https://2c8186ee0c04.ngrok-free.app",
+  "https://incurrable-wilhelmina-uncolloquially.ngrok-free.dev",
   "http://localhost:3000",
   "http://localhost:5000"
 ];
@@ -156,6 +164,9 @@ app.use('/api/v1/users', userRouter);
 app.use('/api/v1/payments', paymentRouter);
 app.use('/api/v1/bundles', bundleRouter);
 app.use('/api/v1/order', orderRouter);
+app.use('/api/v1/commissions', commissionRouter);
+app.use('/api/v1/payout', payoutRouter);
+app.use('/api/v1/transaction', transactionRouter);
 
 
 

@@ -18,7 +18,10 @@ userRouter.get('/', protect, authorizeRoles("admin"),  getResellers);    // I ha
 
 
 //USER ENDPOINT
-userRouter.get('/me', protect, getReseller);  
+// userRouter.get('/me', protect, getReseller);  
+
+//TEST USER ENDPOINT RESELLER
+userRouter.get('/me', getReseller);  
 
 //CUSTOMER ENDPOINT PUBLIC 
 userRouter.get('/public/commission/:resellerCode', getResellerCommission);

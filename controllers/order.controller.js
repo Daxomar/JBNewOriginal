@@ -32,7 +32,10 @@ export const trackOrdersByPhone = async (req, res) => {
         console.log("Tracking orders for phone number:", normalizedPhone); 
 
         // Query by nested field
-       const query = { 'metadata.phoneNumberReceivingData': normalizedPhone };
+       const query = { 
+        'metadata.phoneNumberReceivingData': normalizedPhone,
+        status: 'success' 
+     };
 
 
          // SELECT ONLY NEEDED FIELDS

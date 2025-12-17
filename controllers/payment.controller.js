@@ -6,7 +6,7 @@ import Transaction from '../models/transaction.model.js';
 import { processWebhookEvent } from '../utils/paymentHelper.js';
 
 
-
+//CHANGE THIS TO YOUR ACTUAL PAYSTACK SECRET KEY IN PRODUCTION
 const PAYSTACK_SECRET = "sk_test_b4ecf231f7a4b52f2c5f933b5f5584e1d8dc9321";  //my test key not real right now
 if (!PAYSTACK_SECRET) {
     // Fail fast so developers know to set the env var

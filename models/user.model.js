@@ -99,6 +99,12 @@ totalCommissionPaidOut: {
     default: 0,
 },
 
+totalSales: {
+  type: Number,
+  default: 0
+},
+
+
   },
   { timestamps: true }
 );
