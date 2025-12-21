@@ -53,6 +53,18 @@ const userSchema = new mongoose.Schema(
         default: 0
     },
 
+
+    status:{
+        type: String,
+        default: 'pending'
+    },
+
+    isApproved:{
+        type: Boolean,
+        default: false
+    },
+
+
     isAccountVerified: {
         type: Boolean,
         default: false

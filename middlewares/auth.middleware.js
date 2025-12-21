@@ -12,6 +12,7 @@ import { JWT_SECRET } from "../config/env.js";
 export const authorizeRoles = (...allowedRoles) => {
   return (req, res, next) => {
     if (!req.user) {
+      console.log("check your req.users")
       return res.status(401).json({ 
         code: "UNAUTHORIZED", 
         message: "You must be logged in" 
@@ -38,8 +39,9 @@ export const authorizeRoles = (...allowedRoles) => {
 export const protect = async (req, res, next) => {
       
     const {token} = req.cookies;
-    if(!token) return res.status(401).json({message: 'Unauthorized, login again'});
 
+    if(!token) return res.status(401).json({message: 'Unauthorized, login again'});
+    
 
      
     try{

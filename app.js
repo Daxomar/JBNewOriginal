@@ -26,8 +26,8 @@ const app = express();
 
 // CORS configuration - MUST be before other middlewares
 const allowedOrigins = [
-  "https://7b4b6edf4d89.ngrok-free.app",
-  "https://2c8186ee0c04.ngrok-free.app",
+  "https://5d6b8b3e9de6.ngrok-free.app",
+  "https://cd32a5ca65c8.ngrok-free.app",
   "https://incurrable-wilhelmina-uncolloquially.ngrok-free.dev",
   "http://localhost:3000",
   "http://localhost:5000"

@@ -46,6 +46,25 @@ export const OTPtransporter = nodemailer.createTransport({
   });
 
 
+  //This one is for invite Emails from Admin
+  export const inviteEmailTransported = nodemailer.createTransport({
+    service: "gmail",
+   auth: {
+      user: accountEmail,
+      pass: EMAIL_PASSWORD,
+    },
+  });
+
+
+
+  //This one is for approval Email from admin
+  export const approvalEmailTransported = nodemailer.createTransport({
+    service: "gmail",
+   auth: {
+      user: accountEmail,
+      pass: EMAIL_PASSWORD,
+    },
+  });
 
 
 

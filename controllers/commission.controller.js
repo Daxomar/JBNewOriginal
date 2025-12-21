@@ -8,7 +8,8 @@ export const getMyCommissions = async (req, res) => {
     try {
       // For testing: get resellerId from query parameter
         // For production: use req.user.id from JWT
-        const resellerId = req.query.resellerId;
+        const { id } = req.user
+        const resellerId = id 
 
        
            if (!resellerId) {

@@ -18,7 +18,7 @@ export const signUp = async (req, res, next) => {
 
 
     // So that we don't have to send empty details to the server
-  const { name, email, password, phoneNumber } = req.body;
+  const { name, email,phoneNumber,password  } = req.body;
 
 if (!name || !email || !password || !phoneNumber) {
   return res.json({

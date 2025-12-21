@@ -1,7 +1,8 @@
+import jwt from 'jsonwebtoken';
 import Commission from '../models/commission.model.js';
 import User from '../models/user.model.js'
 import { nanoid } from "nanoid";
-
+import { sendWelcomeEmail, sendOTPEmail, sendInviteEmail, sendApprovedEmail } from "../utils/send-email.js";
 
 
 export const getReseller = async (req, res, next) => {
@@ -13,7 +14,9 @@ export const getReseller = async (req, res, next) => {
         
 
         //Manual setting for testing purposes
-        const id = "6939e7a48945df1d67c26f00"
+        // const id = "6942af84c58df50e5dd16d00"
+
+         const { id } = req.user
 
         console.log("this is what i am currently debugging", id);
         const user = await User.findById(id).select('-password');
@@ -66,138 +69,140 @@ export const getReseller = async (req, res, next) => {
 
 
 //GET USERS BY ADMIN
-export const getResellers = async (req, res, next) => {
+// export const getResellers = async (req, res, next) => {
 
-    try {
-        const { id, email, role } = req.user;
-        console.log("this is what i am currently debugging", id);
+//     try {
+//         const { id, email, role } = req.user;
+//         console.log("this is what i am currently debugging", id);
   
 
-        //Pagination setup
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 2;
-        const skip = (page - 1) * limit;
+//         //Pagination setup
+//         const page = parseInt(req.query.page) || 1;
+//         const limit = parseInt(req.query.limit) || 2;
+//         const skip = (page - 1) * limit;
 
 
 
-        // Search setup 
-        const search = req.query.search ? req.query.search.trim() : "";
+//         // Search setup 
+//         const search = req.query.search ? req.query.search.trim() : "";
 
 
-        // Build search query
-        const query = search
-            ? {
-                $or: [
-                    { name: { $regex: search, $options: "i" } },
-                    { email: { $regex: search, $options: "i" } },
-                    { role: { $regex: search, $options: "i" } },
-                ],
-            }
-            : {};
-
-
-
-        //Fetch total users count matching the query, if no query it just returns all users in the db
-        const totalUsers = await User.countDocuments(query);
-
-
-        // Fetch paginated users using search query if there is any
-        const users = await User.find(query)
-            .select('-password') // Exclude password
-            .skip(skip)
-            .limit(limit)
-            .sort({ createdAt: -1 }); // optional: newest first
+//         // Build search query
+//         const query = search
+//             ? {
+//                 $or: [
+//                     { name: { $regex: search, $options: "i" } },
+//                     { email: { $regex: search, $options: "i" } },
+//                     { role: { $regex: search, $options: "i" } },
+//                 ],
+//             }
+//             : {};
 
 
 
+//         //Fetch total users count matching the query, if no query it just returns all users in the db
+//         const totalUsers = await User.countDocuments(query);
 
 
-        // Handle empty search results or no users gracefully doesnt even go to the next res 
-        if (!users || users.length === 0) {
-            return res.status(200).json({
-                success: true,
-                users: [],
-                message: search
-                    ? "No users matched your search query"
-                    : "No users found in the database",
-                pagination: {
-                    currentPage: page,
-                    totalPages: 0,
-                    totalUsers: 0,
-                    limit,
-                    hasNextPage: false,
-                    hasPrevPage: false,
-                    nextPage: null,
-                    prevPage: null,
-                },
-            });
-        }
-
-
-
-
-        //Clean users model i can return to the frontend safely(Secured)
-        const safeUsers = users.map(user => ({
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            isAccountVerified: user.isAccountVerified,
-            createdAt: user.createdAt,
-        }));
+//         // Fetch paginated users using search query if there is any
+//         const users = await User.find(query)
+//             .select('-password') // Exclude password
+//             .skip(skip)
+//             .limit(limit)
+//             .sort({ createdAt: -1 }); // optional: newest first
 
 
 
 
 
-        //paginated Info
-        const hasMore = page * limit < totalUsers;
-        const totalPages = Math.ceil(totalUsers / limit);
-        const hasNextPage = page < totalPages;
-        const hasPrevPage = page > 1;
-
-
-
-        //Actual data returned should all go well, either via searching or simple viewing the users in my database
-        res.status(200).json({
-            success: true,
-            users: safeUsers,
-            message: ` Here are all the users of my app, Request made by ${role} with id:${id}`,
-            pagination: {
-                currentPage: page,
-                totalPages,
-                totalUsers,
-                limit,
-                hasNextPage,
-                hasPrevPage,
-                nextPage: hasNextPage ? page + 1 : null,
-                prevPage: hasPrevPage ? page - 1 : null,
-            }
-        }) // Right now i am pushing all the user details, would have to make it more specific
+//         // Handle empty search results or no users gracefully doesnt even go to the next res 
+//         if (!users || users.length === 0) {
+//             return res.status(200).json({
+//                 success: true,
+//                 users: [],
+//                 message: search
+//                     ? "No users matched your search query"
+//                     : "No users found in the database",
+//                 pagination: {
+//                     currentPage: page,
+//                     totalPages: 0,
+//                     totalUsers: 0,
+//                     limit,
+//                     hasNextPage: false,
+//                     hasPrevPage: false,
+//                     nextPage: null,
+//                     prevPage: null,
+//                 },
+//             });
+//         }
 
 
 
 
-    } catch (error) {
+//         //Clean users model i can return to the frontend safely(Secured)
+//         const safeUsers = users.map(user => ({
+//             _id: user._id,
+//             name: user.name,
+//             email: user.email,
+//             role: user.role,
+//             isAccountVerified: user.isAccountVerified,
+//             createdAt: user.createdAt,
+//             totalCommissionEarned:user.totalCommissionEarned,
+//             totalCommissionPaidOut: user.totalCommissionPaidOut,
+//         }));
 
-        // Handle custom errors with statusCode
-        if (error.statusCode) {
-            return res.status(error.statusCode).json({
-                success: false,
-                message: error.message
-            });
-        }
 
-        // Handle any other unexpected errors
-        return res.status(500).json({
-            success: false,
-            message: 'Internal Server Error',
-        });
 
-        //next() will be used later when i create my middlewares properly
 
-    }
-}
+
+//         //paginated Info
+//         const hasMore = page * limit < totalUsers;
+//         const totalPages = Math.ceil(totalUsers / limit);
+//         const hasNextPage = page < totalPages;
+//         const hasPrevPage = page > 1;
+
+
+
+//         //Actual data returned should all go well, either via searching or simple viewing the users in my database
+//         res.status(200).json({
+//             success: true,
+//             users: safeUsers,
+//             message: ` Here are all the users of my app, Request made by ${role} with id:${id}`,
+//             pagination: {
+//                 currentPage: page,
+//                 totalPages,
+//                 totalUsers,
+//                 limit,
+//                 hasNextPage,
+//                 hasPrevPage,
+//                 nextPage: hasNextPage ? page + 1 : null,
+//                 prevPage: hasPrevPage ? page - 1 : null,
+//             }
+//         }) // Right now i am pushing all the user details, would have to make it more specific
+
+
+
+
+//     } catch (error) {
+
+//         // Handle custom errors with statusCode
+//         if (error.statusCode) {
+//             return res.status(error.statusCode).json({
+//                 success: false,
+//                 message: error.message
+//             });
+//         }
+
+//         // Handle any other unexpected errors
+//         return res.status(500).json({
+//             success: false,
+//             message: 'Internal Server Error',
+//         });
+
+//         //next() will be used later when i create my middlewares properly
+
+//     }
+// }
 
 
 
@@ -207,6 +212,188 @@ export const getResellers = async (req, res, next) => {
 
 
 //ACCOUNT CREATION BY ADMIN DIRECTLY
+
+
+
+
+export const getResellers = async (req, res, next) => {
+  try {
+    // const { id, email, role } = req.user;
+
+     const { id, email, role } = req.user;
+
+    console.log("Admin fetching resellers, ID:", id);
+
+    // Pagination setup
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Search setup
+    const search = req.query.search ? req.query.search.trim() : "";
+
+    // Build search query
+    const query = search
+      ? {
+          $or: [
+            { name: { $regex: search, $options: "i" } },
+            { email: { $regex: search, $options: "i" } },
+          ],
+        }
+      : {};
+
+    // Execute queries in parallel for better performance
+    const [users, totalUsers, analytics] = await Promise.all([
+      // Fetch paginated users
+      User.find(query)
+        .select('-password -accessToken -refreshToken') // Exclude sensitive fields
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 }) // Newest first
+        .lean(),
+
+      // Get total count for pagination
+      User.countDocuments(query),
+
+      // Get analytics (aggregate all users, not just paginated)
+      User.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalCommissionEarned: { $sum: '$totalCommissionEarned' },
+            totalCommissionPaidOut: { $sum: '$totalCommissionPaidOut' },
+            totalResellers: { $sum: 1 },
+            activeResellers: {
+              $sum: { $cond: [{ $eq: ['$isApproved', true] }, 1, 0] }
+            },
+            pendingResellers: {
+              $sum: { $cond: [{ $eq: ['$isApproved', false] }, 1, 0] }
+            }
+          }
+        }
+      ])
+    ]);
+
+    // Handle empty search results or no users
+    if (!users || users.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: [],
+        analytics: {
+          totalCommissionEarned: 0,
+          totalCommissionPaidOut: 0,
+          totalResellers: 0,
+          activeResellers: 0,
+          pendingResellers: 0,
+          availableBalance: 0,
+          currency: 'GHS'
+        },
+        message: search
+          ? "No users matched your search query"
+          : "No users found in the database",
+        pagination: {
+          currentPage: page,
+          totalPages: 0,
+          totalUsers: 0,
+          limit,
+          hasNextPage: false,
+          hasPrevPage: false,
+          nextPage: null,
+          prevPage: null,
+        },
+      });
+    }
+
+    // Clean users model - safe to return to frontend
+    const safeUsers = users.map(user => ({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role || 'reseller',
+      status: user.isApproved ? 'active' : 'pending',
+      isApproved: user.isApproved || false,
+      isAccountVerified: user.isAccountVerified || false,
+      createdAt: user.createdAt,
+      totalCommissionEarned: user.totalCommissionEarned || 0,
+      totalCommissionPaidOut: user.totalCommissionPaidOut || 0,
+      salesVolume: user.totalCommissionEarned || 0,
+      availableBalance: (user.totalCommissionEarned || 0) - (user.totalCommissionPaidOut || 0)
+    }));
+
+    // Extract analytics data
+    const analyticsData = analytics[0] || {
+      totalCommissionEarned: 0,
+      totalCommissionPaidOut: 0,
+      totalResellers: 0,
+      activeResellers: 0,
+      pendingResellers: 0
+    };
+
+    // Calculate available balance across all resellers
+    const availableBalance = analyticsData.totalCommissionEarned - analyticsData.totalCommissionPaidOut;
+
+    // Pagination info
+    const totalPages = Math.ceil(totalUsers / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+
+    // Return data with analytics
+    res.status(200).json({
+      success: true,
+      data: safeUsers,
+      analytics: {
+        totalCommissionEarned: parseFloat(analyticsData.totalCommissionEarned.toFixed(2)),
+        totalCommissionPaidOut: parseFloat(analyticsData.totalCommissionPaidOut.toFixed(2)),
+        totalResellers: analyticsData.totalResellers,
+        activeResellers: analyticsData.activeResellers,
+        pendingResellers: analyticsData.pendingResellers,
+        availableBalance: parseFloat(availableBalance.toFixed(2)),
+        currency: 'GHS'
+      },
+      message: `Here are all the resellers. Request made by admin with id: ${id}`,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalUsers,
+        limit,
+        hasNextPage,
+        hasPrevPage,
+        nextPage: hasNextPage ? page + 1 : null,
+        prevPage: hasPrevPage ? page - 1 : null,
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching resellers:', error);
+
+    // Handle custom errors with statusCode
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    // Handle any other unexpected errors
+    return res.status(500).json({
+      success: false,
+      message: 'Internal Server Error',
+      error: error.message
+    });
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
 export const creatAccountByAdmin = async (req, res, next) => {
 
     const session = await mongoose.startSession();
@@ -308,7 +495,10 @@ export const resellerLink = async (req, res, next) => {
     try {
     // const userId = req.user.id; // Auth middleware sets this
 
-    const { userId } = req.query; // instead of req.body// for now until i set the middleware properly will manually send the userId in the query string
+    // const { userId } = req.query; // instead of req.body// for now until i set the middleware properly will manually send the userId in the query string
+
+     const { id, email, role } = req.user;
+     const userId = id 
 
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
@@ -336,6 +526,10 @@ export const resellerLink = async (req, res, next) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+
+
+
+
 
 
 //GET RESELLER COMMISSION PUBLIC ENDPOINT
@@ -374,3 +568,65 @@ export const getResellerCommission = async (req, res) => {
     });
   }
 };
+
+
+
+
+
+//Invite Email controller
+export const inviteReseller = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Validate email
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'User with this email already exists'
+      });
+    }
+
+    // Generate invite token (valid for 7 days)
+    const inviteToken = jwt.sign(
+      { email, type: 'reseller_invite' },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    // Create invite link
+    const inviteLink = `https://7b4b6edf4d89.ngrok-free.app/auth/register?token=${inviteToken}&email=${encodeURIComponent(email)}`;
+
+    // Send invite email
+    await sendInviteEmail({
+            to: email,
+            inviteUrl: inviteLink
+  });
+
+    res.status(200).json({
+      success: true,
+      message: 'Invitation sent successfully',
+      email,
+      timestamp: new Date().toISOString()
+    });
+
+
+  } catch (error) {
+    console.error('Error inviting reseller:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send invitation',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+

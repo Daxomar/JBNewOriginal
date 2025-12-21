@@ -202,3 +202,111 @@ export const generateTransactionReceiptTemplate = ({
     </div>
   `;
 };
+
+
+
+
+//INVITE EMAIL 
+export const generateInviteEmailTemplate = ({
+  inviteUrl
+}) => `
+<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; background-color: #f0f6ff; padding: 20px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);">
+    
+    <tr>
+      <td style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); text-align: center; padding: 30px;">
+        <p style="font-size: 48px; font-weight: 800; color: #ffffff; margin: 0;">JoyDataBundle</p>
+        <p style="font-size: 16px; color: #dbeafe; margin-top: 10px;">Reseller Invitation</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td style="padding: 40px 30px;">
+        <h1 style="color: #2563eb; font-size: 26px; margin-bottom: 20px;">You’ve Been Invited 🎉</h1>
+
+        <p style="font-size: 16px;">You have been invited to join the <strong>JoyDataBundle Reseller Platform</strong>.</p>
+
+        <p style="font-size: 16px;">Click the button below to accept your invitation and get started:</p>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${inviteUrl}" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; padding: 15px 35px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block;">
+            Accept Invitation
+          </a>
+        </div>
+
+        <p style="font-size: 14px; color: #475569;">If you didn’t expect this invitation, you can safely ignore this email.</p>
+
+        <p style="margin-top: 30px;">
+          Cheers,<br/>
+          <strong style="color: #2563eb;">The JoyDataBundle Team</strong>
+        </p>
+      </td>
+    </tr>
+
+    <tr>
+      <td style="background-color: #eff6ff; text-align: center; padding: 18px; font-size: 13px; color: #1e3a8a;">
+        JoyDataBundle • Powering Smart Resellers
+      </td>
+    </tr>
+
+  </table>
+</div>
+`;
+
+
+
+//APPROVAL EMAIL TEMPLATE
+export const generateApprovedEmailTemplate = ({
+  userName,
+  loginUrl = "localhost:3000/auth/signin"
+}) => `
+<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; background-color: #f0f6ff; padding: 20px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);">
+
+    <tr>
+      <td style="background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%); text-align: center; padding: 30px;">
+        <p style="font-size: 48px; font-weight: 800; color: #ffffff; margin: 0;">JoyDataBundle</p>
+        <p style="font-size: 16px; color: #e0f2fe; margin-top: 10px;">Account Approval</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td style="padding: 40px 30px;">
+        <h1 style="font-size: 26px; color: #2563eb;">You’re Approved! ✅</h1>
+
+        <p style="font-size: 16px;">Hello <strong style="color:#2563eb;">${userName || 'there'}</strong>,</p>
+
+        <p style="font-size: 16px;">
+          Great news! Your account has been reviewed and approved. You can now log in and start using the platform.
+        </p>
+
+        <div style="background-color: #eff6ff; border-left: 4px solid #2563eb; padding: 18px; border-radius: 8px; margin: 25px 0;">
+          <p style="margin: 0; font-size: 15px; color: #1e3a8a;">
+            🚀 You now have full access to your reseller dashboard.
+          </p>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${loginUrl}" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; padding: 15px 35px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block;">
+            Login to Dashboard
+          </a>
+        </div>
+
+        <p style="margin-top: 30px;">
+          Welcome aboard,<br/>
+          <strong style="color: #2563eb;">The JoyDataBundle Team</strong>
+        </p>
+      </td>
+    </tr>
+
+    <tr>
+      <td style="background-color: #eff6ff; text-align: center; padding: 18px; font-size: 13px; color: #1e3a8a;">
+        JoyDataBundle • Secure • Fast • Reliable
+      </td>
+    </tr>
+
+  </table>
+</div>
+`;
+
+

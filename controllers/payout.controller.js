@@ -48,7 +48,9 @@ export const requestPayout = async (req, res) => {
     session.startTransaction();
 
     try {
-        const resellerId = "6939e7a48945df1d67c26f00"; //MANUALLY TESTING THIS NOW
+
+        const { id } = req.user
+        const resellerId = id  //MANUALLY TESTING THIS NOW
         const { amount, network, phoneNumber, accountName, password } = req.body;
 
         // Validation
@@ -207,9 +209,12 @@ export const requestPayout = async (req, res) => {
 // Get user's payout history
 export const getMyPayouts = async (req, res) => {
     try {
-        // For testing: get resellerId from query parameter
-        // For production: use req.user.id from JWT
-        const resellerId = req.query.resellerId; //manual testing for now 
+
+        const { id } = req.user
+        const resellerId = id 
+
+      
+
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
@@ -445,7 +450,8 @@ export const processPayout = async (req, res) => {
 
 
     try {
-        const adminId = "69261d8ef350c69ff8c0b148";   //Manually Testing right now 
+         const { id } = req.user
+        const adminId = id   //Manually Testing right now 
         const { payoutId } = req.params;
         const { action, rejectionReason, transactionReference } = req.body;
 

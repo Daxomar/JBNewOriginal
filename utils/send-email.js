@@ -1,5 +1,5 @@
-import { generateWelcomeEmailTemplate, generateOTPEmailTemplate, generateTransactionReceiptTemplate } from "./email-template.js";
-import { accountEmail,  SendRemindertransporter, Welcometransporter, OTPtransporter, transactionReceiptTransporter } from "../config/nodemailer.js";
+import { generateWelcomeEmailTemplate, generateOTPEmailTemplate, generateTransactionReceiptTemplate, generateInviteEmailTemplate, generateApprovedEmailTemplate } from "./email-template.js";
+import { accountEmail,  SendRemindertransporter, Welcometransporter, OTPtransporter, transactionReceiptTransporter, approvalEmailTransported, inviteEmailTransported } from "../config/nodemailer.js";
 import dayjs from 'dayjs';
 
 
@@ -101,6 +101,62 @@ export const sendTransactionReceiptEmail = async ({
     return info;
   } catch (error) {
     console.error("Error sending receipt email:", error);
+    throw error;
+  }
+};
+
+
+
+
+//INVITE EMAIL 
+export const sendInviteEmail = async ({ 
+  to,
+  inviteUrl
+ }) => {
+  if (!to || !inviteUrl) throw new Error('Email and invite URL are required');
+
+  const mailOptions = {
+    from: accountEmail,
+    to,
+    subject: 'You’ve been invited to join JoyDataBundle 🚀',
+    html: generateInviteEmailTemplate({
+      inviteUrl
+    })
+  };
+
+  try {
+    const info = await inviteEmailTransported.sendMail(mailOptions);
+    console.log('Invite email sent successfully');
+    return info;
+  } catch (error) {
+    console.error('Error sending invite email:', error);
+    throw error;
+  }
+};
+
+
+
+
+//APPROVAL EMAIL SENDER
+export const sendApprovedEmail = async ({ to, userName, loginUrl }) => {
+  if (!to || !loginUrl) throw new Error('Email and login URL are required');
+
+  const mailOptions = {
+    from: accountEmail,
+    to,
+    subject: 'Your JoyDataBundle Account Has Been Approved ✅',
+    html: generateApprovedEmailTemplate({
+      userName,
+      loginUrl
+    })
+  };
+
+  try {
+    const info = await approvalEmailTransported.sendMail(mailOptions);
+    console.log('Approval email sent successfully');
+    return info;
+  } catch (error) {
+    console.error('Error sending approval email:', error);
     throw error;
   }
 };

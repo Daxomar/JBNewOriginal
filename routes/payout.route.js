@@ -8,33 +8,36 @@ import {
   getAllPayouts,
   processPayout,
 } from '../controllers/payout.controller.js';
-
+import  {  authorizeRoles,  protect,  } from '../middlewares/auth.middleware.js'
 
 const payoutRouter = Router();
 
 
 
-//TESTING ROUTES WITHOUT AUTH YET
-payoutRouter.post('/request', requestPayout);
-payoutRouter.get('/my-payouts',  getMyPayouts);
-payoutRouter.get('/balance', getAvailableBalance);
-payoutRouter.patch('/:payoutId/cancel',  cancelPayout);
+/* ============================
+   USER ROUTES (AUTHENTICATED)
+   ============================ */
 
+// Request a payout
+payoutRouter.post('/request', protect, requestPayout);
 
-// User routes with auth 
-// payoutRouter.post('/request', authenticateToken, requestPayout);
-// payoutRouter.get('/my-payouts', authenticateToken, getMyPayouts);
-// payoutRouter.get('/balance', authenticateToken, getAvailableBalance);
-// payoutRouter.patch('/:payoutId/cancel', authenticateToken, cancelPayout);
+// Get my payouts history
+payoutRouter.get('/my-payouts', protect, getMyPayouts);
 
+// Get available balance (NEEDS PROTECTION!)
+payoutRouter.get('/balance', protect, getAvailableBalance);
 
+// Cancel my payout (future feature)
+// payoutRouter.patch('/:payoutId/cancel', protect, cancelPayout);
 
-//TESTING ADMIN ROUTE WITHOUT AUTH YET
-payoutRouter.get('/all', getAllPayouts);
-payoutRouter.patch('/:payoutId/process', processPayout);
+/* ============================
+   ADMIN ROUTES
+   ============================ */
 
-// Admin routes
-// payoutRouter.get('/all', authenticateToken, isAdmin, getAllPayouts);
-// payoutRouter.patch('/:payoutId/process', authenticateToken, isAdmin, processPayout);
+// Get all payouts (admin dashboard)
+payoutRouter.get('/all', protect, authorizeRoles("admin"), getAllPayouts);
+
+// Process/approve a payout (admin action)
+payoutRouter.patch('/:payoutId/process', protect, authorizeRoles("admin"), processPayout);
 
 export default payoutRouter;
