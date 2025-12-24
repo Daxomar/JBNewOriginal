@@ -12,6 +12,7 @@ import orderRouter from './routes/order.route.js';
 import commissionRouter from './routes/commission.route.js';
 import payoutRouter from './routes/payout.route.js';
 import transactionRouter from './routes/transaction.route.js';
+import resellerBundlePriceRouter from './routes/resellerBundlePrice.route.js';
 
 //DATABASE CONNECTION
 import connectToDatabase from './database/mongodb.js';
@@ -167,6 +168,7 @@ app.use('/api/v1/order', orderRouter);
 app.use('/api/v1/commissions', commissionRouter);
 app.use('/api/v1/payout', payoutRouter);
 app.use('/api/v1/transaction', transactionRouter);
+app.use('/api/v1/resellerBundlePrice', resellerBundlePriceRouter );
 
 
 

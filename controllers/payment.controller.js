@@ -3,20 +3,31 @@ import { createHmac } from 'crypto';
 import User from '../models/user.model.js';
 import Bundle from '../models/bundle.model.js'
 import Transaction from '../models/transaction.model.js';
-import { processWebhookEvent } from '../utils/paymentHelper.js';
+import ResellerBundlePrice from '../models/resellerBundlePrice.model.js';
+// import { PAYSTACK_SECRET_KEY} from "../config/env.js";
+import { processWebhookEvent  } from '../utils/paymentHelper.js';
+import {getResellerBundlePrice} from '../utils/getResellerBundlePrice.js'
 
 
 //CHANGE THIS TO YOUR ACTUAL PAYSTACK SECRET KEY IN PRODUCTION
-const PAYSTACK_SECRET = "sk_test_b4ecf231f7a4b52f2c5f933b5f5584e1d8dc9321";  //my test key not real right now
-if (!PAYSTACK_SECRET) {
+const PAYSTACK_SECRET_KEY = "sk_test_b4ecf231f7a4b52f2c5f933b5f5584e1d8dc9321";  //my test key not real right now
+if (!PAYSTACK_SECRET_KEY) {
     // Fail fast so developers know to set the env var
     throw new Error('PAYSTACK_SECRET_KEY environment variable is required');
 }
 
+
+// Constants
+const PAYSTACK_CHARGE_PERCENTAGE = 0.02; // 2%
+
+
+
+
+
 const paystack = axios.create({
     baseURL: 'https://api.paystack.co',
     headers: {
-        Authorization: `Bearer ${PAYSTACK_SECRET}`,
+        Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
         'Content-Type': 'application/json',
     },
 });
@@ -88,10 +99,27 @@ export async function initializePayment(req, res) {
 
 
 
+        // Check if bundle is active
+        if (!bundle.isActive) {
+            return res.status(400).json({
+                status: false,
+                message: "This bundle is currently unavailable"
+            });
+        }
+
+
+
        let reseller = null;
+   
        console.log("Reseller Code received:", resellerCode);
        if(resellerCode){
-        reseller = await User.findOne({ resellerCode})
+        reseller = await User.findOne({ 
+            resellerCode,
+            // role:'user',
+            // isApproved: true
+        })
+
+
 
         if(!reseller){
             return res.status(404).json({
@@ -102,12 +130,16 @@ export async function initializePayment(req, res) {
 
        }
 
-
+       //RSBP -- ResellerBundlePrice
+      const RSBP = await getResellerBundlePrice (reseller._id, bundle._id)   // me picking up the actual reseller._id = "6322344..." and actual bundle id too as well bundle._id = "66663344..."
+       
 
 
        //Commission Calculation Based on Reseller Rate
-       const commissionAmount = bundle.JBSP * (reseller?.commissionRate || 0) / 100;
-       const finalAmount = bundle.JBSP + commissionAmount;
+    //    const commissionAmount = bundle.JBSP * (reseller?.commissionRate || 0) / 100;
+       const commissionAmount = RSBP.commission;
+
+       const finalAmount = bundle.JBSP + commissionAmount + ((bundle.JBSP + commissionAmount) * PAYSTACK_CHARGE_PERCENTAGE) ;
 
        console.log("Commission Amount:", commissionAmount);
        console.log("Final Amount to charge customer:", finalAmount);
@@ -137,7 +169,7 @@ export async function initializePayment(req, res) {
             resellerId: reseller?._id?.toString() || null,
             resellerName : reseller?.name || null,
             resellerCommissionPercentage: reseller?.commissionRate || null,
-            resellerProfit: finalAmount - bundle.JBSP || null
+            resellerProfit: commissionAmount || null
         };
         
 
@@ -301,7 +333,7 @@ export async function handleWebhook(req, res) {
         }
 
         const rawBody = req.rawBody || Buffer.from(JSON.stringify(req.body));
-        const computed = createHmac('sha512', PAYSTACK_SECRET).update(rawBody).digest('hex');
+        const computed = createHmac('sha512', PAYSTACK_SECRET_KEY).update(rawBody).digest('hex');
   
 
 

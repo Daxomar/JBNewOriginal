@@ -3,13 +3,13 @@ import Bundle from '../models/bundle.model.js'
 
 
 export const createBundleInDb = async (req, res, next) => {
-  const { Bundle_id, Data, name, price, network, Duration } = req.body;
+  const { Bundle_id, Data, name, JBCP, JBSP, network, size, Duration,  recommendedRange } = req.body;
 
   try {
    
 
     // 1. Validate required fields
-    if (!Bundle_id || !Data || !name || !price || !network || !Duration) {
+    if (!Bundle_id || !Data || !name || !JBCP || !JBSP|| !network || !Duration) {
       return res.status(400).json({
         success: false,
         message: "Missing required bundle details"
@@ -30,9 +30,12 @@ export const createBundleInDb = async (req, res, next) => {
       Bundle_id,
       Data,
       name,
-      price,
+      JBCP,
+      JBSP,
+      size,
       network,
       Duration,
+      recommendedRange
     });
 
     // 5. Respond
@@ -54,13 +57,16 @@ export const createBundleInDb = async (req, res, next) => {
 
 export const getAllBundles = async (req, res, next) => {
   try {
-
-    // Fetch all bundles from DB
     const bundles = await Bundle.find();
+
+    const activeCount = bundles.filter(b => b.isActive).length;
+    const inactiveCount = bundles.filter(b => !b.isActive).length;
 
     res.status(200).json({
       success: true,
       message: "Bundles fetched successfully",
+      activeCount,
+      inactiveCount,
       data: bundles
     });
 

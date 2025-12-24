@@ -10,6 +10,13 @@ const bundleSchema = new mongoose.Schema({
   network: String, // MTN, Vodafone, AirtelTigo
   size: String, // e.g. "1GB", "5GB"
   Duration:String, // non-expiry
+  isActive: {
+  type: Boolean,
+  default: true,
+  index: true
+},
+
+recommendedRange:String,
 });
 
 

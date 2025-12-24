@@ -1,7 +1,7 @@
 import  { Router} from 'express';
 
-import  { authorize,  authorizeRoles,  protect,  userAuthCookie,   } from '../middlewares/auth.middleware.js'
-import { creatAccountByAdmin, getReseller, getResellers, resellerLink, getResellerCommission, inviteReseller} from '../controllers/user.controller.js'
+import  {  authorizeRoles,  protect,   } from '../middlewares/auth.middleware.js'
+import { creatAccountByAdmin, getReseller, getResellers, resellerLink, getResellerCommission, inviteReseller,approveReseller,rejectReseller} from '../controllers/user.controller.js'
 
 const userRouter = Router();
 
@@ -119,6 +119,31 @@ userRouter.get(
   authorizeRoles("admin"),
   getReseller
 );
+
+userRouter.patch(
+  '/:userId/approve',
+  protect,
+  authorizeRoles('admin'),
+  approveReseller
+);
+
+// Reject user (Admin only)
+userRouter.patch(
+  '/:userId/reject',
+  protect,
+  authorizeRoles('admin'),
+  rejectReseller
+);
+
+// Toggle approval status (Admin only) - Alternative single endpoint
+// userRouter.patch(
+//   '/:userId/toggle-approval',
+//   protect,
+//   authorizeRoles('admin'),
+//   toggleUserApproval
+// );
+
+
 
 // Update reseller by ID (admin only – future)
 // userRouter.put(

@@ -402,28 +402,49 @@ export const verifyEmail = async (req, res, next) => {
 //CHECK IF USER IS AUTHENTICATED
 export const isAuthenicated = async (req, res) => {
     try {
-        const { isAccountVerified } = req.user
+    // req.user is set by protect middleware
+    // It already verified the JWT token exists and is valid
+    
+    const {id} = req.user
+    // Get full user data from database (fresher than JWT payload)
+    const user = await User.findById(id).select('-password');
 
-        if (!isAccountVerified) {   //will have to change this later to accountcerified or user exist
-            return res.json({
-                success: false,
-                message: "Account not verified"
-            });
-        }
-
-        return res.json({
-            success: true,
-            message: "User is authenticated and verified"
-        });
-
-
-    } catch (error) {
-        res.json({
-            succes: false, message: error.message
-
-        })
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
     }
-}
+
+
+    
+ 
+
+
+    // Return user data (this is what AuthContext will use)
+    return res.json({
+      success: true,
+      message: 'User is authenticated and still has valid session',
+      user: {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            isAccountVerified: user.isAccountVerified,
+            createdAt: user.createdAt,
+      }
+    });
+
+  } catch (error) {
+    console.error('Verify auth error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error during authentication verification',
+      error: error.message
+    });
+  }
+};
+
 
 
 

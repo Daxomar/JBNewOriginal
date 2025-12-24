@@ -7,63 +7,63 @@ import { sendWelcomeEmail, sendOTPEmail, sendInviteEmail, sendApprovedEmail } fr
 
 export const getReseller = async (req, res, next) => {
 
-    try {
+  try {
 
-        // real usage is this don't forget
-        // const { id } = req.user
-        
-
-        //Manual setting for testing purposes
-        // const id = "6942af84c58df50e5dd16d00"
-
-         const { id } = req.user
-
-        console.log("this is what i am currently debugging", id);
-        const user = await User.findById(id).select('-password');
-
-        // const user = await User.findById(req.params.id).select('-password'); // brings eveything out aside from the password of a user
-
-        if (!user) {
-            const error = new Error('User not found')
-            error.statusCode = 404;
-            throw error
-        }
-
-        const safeUser = {
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            isAccountVerified: user.isAccountVerified,
-            resellerCode: user.resellerCode,
-            commissionRate: user.commissionRate,
-            totalCommissionsEarned: user.totalCommissionEarned,
-            totalCommissionsPaidOut: user.totalCommissionPaidOut,
-            totalSales:user.totalSales,
-            createdAt: user.createdAt,
-        };
-
-        res.status(200).json({ 
-            success: true,
-            
-            data: safeUser 
-            }) // Right now i am pushing all the user details, would have to make it more specific
+    // real usage is this don't forget
+    // const { id } = req.user
 
 
-        // res.status(200).json({
-        //   success: true,
-        //   userData:{
-        //     name:user.name,
-        //     isAccountVerified: user.isAccountVerified
-        //   }
-        // })
+    //Manual setting for testing purposes
+    // const id = "6942af84c58df50e5dd16d00"
 
+    const { id } = req.user
 
-    } catch (error) {
+    console.log("this is what i am currently debugging", id);
+    const user = await User.findById(id).select('-password');
 
-        next(error)
+    // const user = await User.findById(req.params.id).select('-password'); // brings eveything out aside from the password of a user
 
+    if (!user) {
+      const error = new Error('User not found')
+      error.statusCode = 404;
+      throw error
     }
+
+    const safeUser = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isAccountVerified: user.isAccountVerified,
+      resellerCode: user.resellerCode,
+      commissionRate: user.commissionRate,
+      totalCommissionsEarned: user.totalCommissionEarned,
+      totalCommissionsPaidOut: user.totalCommissionPaidOut,
+      totalSales: user.totalSales,
+      createdAt: user.createdAt,
+    };
+
+    res.status(200).json({
+      success: true,
+
+      data: safeUser
+    }) // Right now i am pushing all the user details, would have to make it more specific
+
+
+    // res.status(200).json({
+    //   success: true,
+    //   userData:{
+    //     name:user.name,
+    //     isAccountVerified: user.isAccountVerified
+    //   }
+    // })
+
+
+  } catch (error) {
+
+    next(error)
+
+  }
 }
 
 
@@ -74,7 +74,7 @@ export const getReseller = async (req, res, next) => {
 //     try {
 //         const { id, email, role } = req.user;
 //         console.log("this is what i am currently debugging", id);
-  
+
 
 //         //Pagination setup
 //         const page = parseInt(req.query.page) || 1;
@@ -220,7 +220,7 @@ export const getResellers = async (req, res, next) => {
   try {
     // const { id, email, role } = req.user;
 
-     const { id, email, role } = req.user;
+    const { id, email, role } = req.user;
 
     console.log("Admin fetching resellers, ID:", id);
 
@@ -235,11 +235,11 @@ export const getResellers = async (req, res, next) => {
     // Build search query
     const query = search
       ? {
-          $or: [
-            { name: { $regex: search, $options: "i" } },
-            { email: { $regex: search, $options: "i" } },
-          ],
-        }
+        $or: [
+          { name: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+        ],
+      }
       : {};
 
     // Execute queries in parallel for better performance
@@ -396,77 +396,77 @@ export const getResellers = async (req, res, next) => {
 
 export const creatAccountByAdmin = async (req, res, next) => {
 
-    const session = await mongoose.startSession();
-    session.startTransaction(); // I actually learnt this in class for relational dbs, makes the database atomic
-    //all or nothing, no halfway authentications, it either works or it doesn't
+  const session = await mongoose.startSession();
+  session.startTransaction(); // I actually learnt this in class for relational dbs, makes the database atomic
+  //all or nothing, no halfway authentications, it either works or it doesn't
 
 
-    const { id, role } = req.user
+  const { id, role } = req.user
 
-    // So that we don't have to send empty details to the server
-    const { name, email, password } = req.body;
-    if (!name || !email || !password) {
-        return res.json(
-            {
-                success: false,
-                message: 'Missing Details, Please provide them'
-            }
-        )
+  // So that we don't have to send empty details to the server
+  const { name, email, password } = req.body;
+  if (!name || !email || !password) {
+    return res.json(
+      {
+        success: false,
+        message: 'Missing Details, Please provide them'
+      }
+    )
+  }
+
+  //Making sure the person making the update request is the admin first
+  if (!req.user || req.user.role !== 'admin') {
+    const error = new Error('Unauthorized to create admin accounts');
+    error.statusCode = 403;
+    throw error;
+  }
+
+
+  try {
+    //Check if user already exists
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser) {
+      const error = new Error('User already exists')
+      error.statusCode = 409;
+      throw error;
     }
 
-    //Making sure the person making the update request is the admin first
-    if (!req.user || req.user.role !== 'admin') {
-        const error = new Error('Unauthorized to create admin accounts');
-        error.statusCode = 403;
-        throw error;
-    }
-
-
-    try {
-        //Check if user already exists
-        const existingUser = await User.findOne({ email });
-
-        if (existingUser) {
-            const error = new Error('User already exists')
-            error.statusCode = 409;
-            throw error;
-        }
-
-        //If newuser doesn't already exit continue flow and hash created passwords
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-        const newUsers = await User.create([{ name, email, password: hashedPassword }], { session }); // I might change this later for just singleNewUser creation
+    //If newuser doesn't already exit continue flow and hash created passwords
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    const newUsers = await User.create([{ name, email, password: hashedPassword }], { session }); // I might change this later for just singleNewUser creation
 
 
 
-        //I DID NOT AUTOMATICALLY GENERATE TOKEN AND SET TO COOKIES, CAUSE I DON'T WANT THE ACCOUNT TO BE IMMEDIATELY LOGGED IN AFTER CREATION
-        await session.commitTransaction();
-        session.endSession();
+    //I DID NOT AUTOMATICALLY GENERATE TOKEN AND SET TO COOKIES, CAUSE I DON'T WANT THE ACCOUNT TO BE IMMEDIATELY LOGGED IN AFTER CREATION
+    await session.commitTransaction();
+    session.endSession();
 
 
 
-        res.status(201).json({
-            success: true,
-            message: `User created successfully by ${id} role: ${role}, PLEASE LOG IN `,
-            data: {
-                user: newUsers[0],
-            }
-        });
+    res.status(201).json({
+      success: true,
+      message: `User created successfully by ${id} role: ${role}, PLEASE LOG IN `,
+      data: {
+        user: newUsers[0],
+      }
+    });
 
 
-        // Sends the welcome email 
-        await sendWelcomeEmail({
-            to: email,
-            userName: name
-        })
+    // Sends the welcome email 
+    await sendWelcomeEmail({
+      to: email,
+      userName: name
+    })
 
 
 
-    } catch (error) {
-        await session.abortTransaction();
-        session.endSession();
-        next(error);
-    }
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    next(error);
+  }
 
 }
 
@@ -475,15 +475,15 @@ export const creatAccountByAdmin = async (req, res, next) => {
 //ACCOUNT UPDATE BY ADMIN DIRECTLY
 export const updateUserByAdmin = async (req, res, next) => {
 
-    try {
-        const { id: user } = req.param;  //user id from request params
-        const { id: loggedInUser, role } = req.user; // current logged-in user supposedly admin from middleware trying to update a specific account by using :id params
+  try {
+    const { id: user } = req.param;  //user id from request params
+    const { id: loggedInUser, role } = req.user; // current logged-in user supposedly admin from middleware trying to update a specific account by using :id params
 
-        const updateData = req.body
-    } catch (error) {
-        console.log(error)
-        next(error)
-    }
+    const updateData = req.body
+  } catch (error) {
+    console.log(error)
+    next(error)
+  }
 
 }
 
@@ -492,15 +492,16 @@ export const updateUserByAdmin = async (req, res, next) => {
 
 // RESLLER LINK GENERATION
 export const resellerLink = async (req, res, next) => {
-    try {
+  try {
     // const userId = req.user.id; // Auth middleware sets this
 
     // const { userId } = req.query; // instead of req.body// for now until i set the middleware properly will manually send the userId in the query string
 
-     const { id, email, role } = req.user;
-     const userId = id 
+    const { id, email, role } = req.user;
+    const userId = id
 
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
+    // if (userId) return res.status(401).json({ message: "Unauthorized" });
 
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -508,16 +509,16 @@ export const resellerLink = async (req, res, next) => {
     // Generate resellerCode if not exists
     if (!user.resellerCode || user.resellerCode.trim() === "") {
 
-        const safeName = user.name || "USER";
+      const safeName = user.name || "USER";
       const prefix = safeName.substring(0, 4).toUpperCase(); // first 4 letters
       user.resellerCode = `${prefix}-${nanoid(6)}`; // e.g., JOHN-a1b2c3
       await user.save();
     }
 
-    const referralURL = `http://localhost:3000/buy?resellerCode=${user.resellerCode}`;
+    const referralURL = `${process.env.FRONTEND_URL}?resellerCode=${user.resellerCode}`;
 
     return res.status(200).json({
-      success: true,  
+      success: true,
       message: "Referral link generated successfully",
       referralURL,
     });
@@ -536,20 +537,20 @@ export const resellerLink = async (req, res, next) => {
 export const getResellerCommission = async (req, res) => {
   try {
     const { resellerCode } = req.params;
-    
+
     console.log("Backend received resellerCode:", resellerCode);
     // Find reseller by code
-    const reseller = await User.findOne({ 
+    const reseller = await User.findOne({
       resellerCode: resellerCode,
     });
-    
+
     if (!reseller) {
       return res.status(404).json({
         success: false,
         message: "Reseller not found"
       });
     }
-    
+
     // Return ONLY commission rate (no sensitive data)
     return res.status(200).json({
       success: true,
@@ -559,7 +560,7 @@ export const getResellerCommission = async (req, res) => {
         // Optionally: reseller name for display
       }
     });
-    
+
   } catch (error) {
     console.error("Get reseller commission error:", error);
     return res.status(500).json({
@@ -607,9 +608,9 @@ export const inviteReseller = async (req, res) => {
 
     // Send invite email
     await sendInviteEmail({
-            to: email,
-            inviteUrl: inviteLink
-  });
+      to: email,
+      inviteUrl: inviteLink
+    });
 
     res.status(200).json({
       success: true,
@@ -630,3 +631,122 @@ export const inviteReseller = async (req, res) => {
   }
 };
 
+
+
+//Approve Reseller Controller
+export const approveReseller = async (req, res) => {
+  try {
+    const { id } = req.user
+    
+
+    const { userId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (user.isApproved) return res.status(409).json({
+      message: "User already approved"
+    })
+
+
+    if (user.role !== 'user') {
+      return res.status(400).json({
+        success: false,
+        message: 'Only resellers can be approved'
+      });
+    }
+
+
+    user.isApproved = true; // e.g., JOHN-a1b2c3
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "User Approved Successfully",
+      data: {
+        userId,
+        name: user.name,
+        email: user.email,
+        isApproved: true,
+        approvedAt: user.updatedAt,
+        approvedBy: id
+      },
+    });
+
+  } catch (error) {
+    console.error('Error Updating Reseller as approved:', error);
+
+    // Handle custom errors with statusCode
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    // Handle any other unexpected errors
+    return res.status(500).json({
+      success: false,
+      message: 'Internal Server Error',
+      error: error.message
+    });
+  }
+}
+
+
+export const rejectReseller = async (req, res) => {
+  try {
+    // const rejectedBy = req.user.id;
+    const { userId } = req.params;
+    // const { reason } = req.body; // optional
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    if (user.isApproved) {
+      return res.status(409).json({
+        success: false,
+        message: "Approved resellers cannot be rejected"
+      });
+    }
+
+    if (user.role !== 'user') {
+      return res.status(400).json({
+        success: false,
+        message: "Only reseller accounts can be rejected"
+      });
+    }
+
+    user.isApproved = true;
+
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Reseller rejected successfully",
+      data: {
+        userId: user._id,
+        name: user.name,
+        email: user.email,
+        isRejected: true,
+        rejectedAt:new Date(),
+
+        // rejectionReason: user.rejectionReason  will add this later
+      }
+    });
+
+  } catch (error) {
+    console.error("Error rejecting reseller:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error"
+    });
+  }
+};
