@@ -515,7 +515,7 @@ export const resellerLink = async (req, res, next) => {
       await user.save();
     }
 
-    const referralURL = `${process.env.FRONTEND_URL}?resellerCode=${user.resellerCode}`;
+    const referralURL = `${process.env.FRONTEND_URL}/buy/bundlepurchase?resellerCode=${user.resellerCode}`;
 
     return res.status(200).json({
       success: true,
