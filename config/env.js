@@ -17,4 +17,5 @@ export const {
     EMAIL_PASSWORD,
     PAYSTACK_SECRET_KEY,
     FRONTEND_URL,
+    SYSTEM_RESELLER_CODE
                    } = process.env;

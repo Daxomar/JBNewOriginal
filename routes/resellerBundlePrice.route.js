@@ -18,7 +18,9 @@ const resellerBundlePriceRouter = Router();
 
 
 
-// PUBLIC: Get bundles with reseller's custom prices (for customers)
+// PUBLIC: Get bundles with reseller's custom prices (for customers)  I have two because one doesnt take any reseller code and uses the system code instead should humans decide to remove it from the url mhawhahaha
+resellerBundlePriceRouter.get('/public', getBundlesByResellerCode);
+
 resellerBundlePriceRouter.get('/public/:resellerCode', getBundlesByResellerCode);
 
 

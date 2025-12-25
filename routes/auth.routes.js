@@ -13,7 +13,7 @@ authRouter.post('/sign-in',  signIn)
 
 
 //path: /api/v1/auth/sign-out (POST)
-authRouter.post('/sign-out', signOut)
+authRouter.post('/sign-out', protect, signOut)
 
 
 authRouter.post('/send-verify-otp', protect, sendVerifyOtp)

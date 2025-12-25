@@ -4,17 +4,37 @@ import User from '../models/user.model.js';
 
 
 
+//.ENV THIS GOES TO LATER HOHO
+// const SYSTEM_RESELLER_CODE = process.env.SYSTEM_RESELLER_CODE 
+const SYSTEM_RESELLER_CODE = 'SYS_JB_a8f39c1e4b7d0f29';
+
 
 export const getBundlesByResellerCode = async (req, res) => {
   try {
     const { resellerCode } = req.params;
 
+
+    // 1. Reject direct usage of system code (if user tried to pass it)
+    if (resellerCode && resellerCode === SYSTEM_RESELLER_CODE) {
+      return res.status(400).json({
+        success: false,
+        message: 'MotherFucker you cannot use the system reseller code here directly via the URL be smarter'
+      });
+    }
+    
+    // Now the FallBack happens when i want it to
+    const codeToUse = resellerCode || SYSTEM_RESELLER_CODE;
+
+
     // Find reseller by code
     const reseller = await User.findOne({ 
-      resellerCode,
-      role: 'user', // Assuming resellers have role 'user'
+      resellerCode: codeToUse,
+      role: 'user',
+      ...(resellerCode && { isSystemAccount: { $ne: true } })
+      // Assuming resellers have role 'user'
     //   isAccountVerified: true 
     });
+
 
     if (!reseller) {
       return res.status(404).json({ 
