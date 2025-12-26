@@ -7,7 +7,7 @@ import {
 
 const arcjetMiddleware = async (req, res, next) => {
     try {
-        const decision = await aj.protect(req, { requested: 2 }); // requested :2 means i take away 2 token from the bucket upon every request
+        const decision = await aj.protect(req, { requested: 1 }); // requested :1 means i take away 2 token from the bucket upon every request
         // console.log('Arcjet decision:', decision);
 
         if (decision.isDenied()) {

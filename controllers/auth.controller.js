@@ -270,6 +270,23 @@ export const signIn = async (req, res, next) => {
 export const signOut = async (req, res, next) => {
 
     try {
+
+        const userId = req.user.id
+
+       // Invalidate tokens in database if user exists
+    if (userId) {
+      await User.findByIdAndUpdate(
+        userId,
+        {
+          $set: {
+            refreshToken: null,
+            accessToken: null
+          }
+        },
+        { new: true }
+      );
+    }
+
         res.clearCookie('token', {
             httpOnly: true,
             secure: true,

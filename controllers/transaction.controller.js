@@ -61,6 +61,10 @@ const getAnalytics = async (filter) => {
   console.log("ProfitData", profitData)
 
 
+
+   const PAYSTACK_FEE = 0.02; // 1.5% Paystack fee constant
+
+
     // Calculate totals
     const totalRevenue = revenueData[0]?.totalRevenue || 0;
     const totalOrders = ordersData || 0;
@@ -72,11 +76,16 @@ const getAnalytics = async (filter) => {
     const totalBaseCost = costData[0]?.totalBaseCost || 0;
     const totalJBProfitForCost = costData[0]?.totalJBProfit || 0;
     const totalJBCP = totalBaseCost - totalJBProfitForCost;
-    
+
+
+
+    // Calculate Paystack fees and revenue before fees
+    const totalRevenueBeforePaystackAddition= totalRevenue / (1 + PAYSTACK_FEE);
+    const totalPaystackFees = totalRevenue - totalRevenueBeforePaystackAddition;
 
     //TOTAL RESELLERS PROFIT FOR NOW, BUT WILL MOST LIKELY USE  CREATED BY ME CHUKS
-    const totalResellerProfits = totalRevenue - totalBaseCost || 0
-    const totalActualJBCPCost = totalRevenue - totalJBProfit -totalResellerProfits|| 0.
+    const totalResellerProfits = totalRevenue - totalBaseCost - totalPaystackFees || 0
+    const totalActualJBCPCost = totalRevenue - totalJBProfit - totalResellerProfits - totalPaystackFees || 0.
     const totalCost = totalResellerProfits + totalActualJBCPCost || 0;
     console.log(totalResellerProfits)
     console.log(totalActualJBCPCost)
@@ -85,6 +94,9 @@ const getAnalytics = async (filter) => {
     // Calculate additional metrics
     const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
     const profitMargin = totalRevenue > 0 ? (totalJBProfit / totalRevenue) * 100 : 0;
+
+   console.log("Total Paystack Fees", totalPaystackFees)
+   console.log("Total Revenue before Paystack addition", totalRevenueBeforePaystackAddition)
 
     return {
       totalRevenue: parseFloat(totalRevenue.toFixed(2)),
@@ -98,6 +110,9 @@ const getAnalytics = async (filter) => {
       profitMargin: parseFloat(profitMargin.toFixed(2)),
       totalResellerProfits: parseFloat(totalResellerProfits.toFixed(2)),
       totalActualJBCPCost:parseFloat(totalActualJBCPCost.toFixed(2)),
+      totalPaystackFees: parseFloat(totalPaystackFees.toFixed(2)),
+      totalRevenueBeforePaystackAddition: parseFloat(totalRevenueBeforePaystackAddition.toFixed(2)),
+
       currency: 'GHS'
     };
 
@@ -115,6 +130,8 @@ const getAnalytics = async (filter) => {
       totalResellerProfits:0,
       totalActualJBCPCost:0,
       profitMargin: 0,
+      totalPaystackFees: 0,
+      totalRevenueBeforePaystackAddition: 0,  
       currency: 'GHS',
       error: 'Failed to calculate some analytics'
     };

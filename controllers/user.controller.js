@@ -29,13 +29,23 @@ export const getReseller = async (req, res, next) => {
       throw error
     }
 
+
+    let resellerCode = null;
+
+
+     // Only include resellerCode if user is verified and approved
+    if (user.isAccountVerified && user.isApproved) {
+      resellerCode = user.resellerCode;
+    }
+
     const safeUser = {
       _id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
       isAccountVerified: user.isAccountVerified,
-      resellerCode: user.resellerCode,
+      isApproved: user.isApproved,
+      resellerCode: resellerCode,
       commissionRate: user.commissionRate,
       totalCommissionsEarned: user.totalCommissionEarned,
       totalCommissionsPaidOut: user.totalCommissionPaidOut,
@@ -45,7 +55,6 @@ export const getReseller = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-
       data: safeUser
     }) // Right now i am pushing all the user details, would have to make it more specific
 
@@ -515,7 +524,16 @@ export const resellerLink = async (req, res, next) => {
       await user.save();
     }
 
-    const referralURL = `${process.env.FRONTEND_URL}/buy/bundlepurchase?resellerCode=${user.resellerCode}`;
+  let referralURL;
+
+  // Check verification and approval status
+    if (!user.isAccountVerified) {
+      referralURL = "You need to verify your account first";
+    } else if (user.isAccountVerified && !user.isApproved) {
+      referralURL = "You need to be Verified and Approved to generate a referral link";
+    } else {
+      referralURL = `${process.env.FRONTEND_URL}/buy/bundlepurchase?resellerCode=${user.resellerCode}`;
+    }
 
     return res.status(200).json({
       success: true,

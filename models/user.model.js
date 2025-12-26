@@ -116,6 +116,9 @@ totalSales: {
   default: 0
 },
 
+//Fot future use - system accounts that cannot login
+  isSystemAccount: Boolean,
+  canLogin: Boolean
 
   },
   { timestamps: true }
