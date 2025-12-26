@@ -61,37 +61,18 @@ export async function processWebhookEvent(event) {
         // ✅ Commission logic - only after payment confirmed
         if (transaction.resellerCode && transaction.metadata?.resellerProfit) {
             const commissionAmount = transaction.metadata.resellerProfit;
-            const resellerCode = transaction.resellerCode;
-            const resellerId = transaction.metadata?.resellerId;
+            
 
 
-            // Use actual reseller code from .env if it's the system account
-            const actualResellerCode = resellerCode === process.env.SYSTEM_RESELLER_CODE
-                ? process.env.SYSTEM_RESELLER_CODE
-                : resellerCode;
+         
 
 
             try {
-                // 1. Verify reseller exists and is legitimate either system or actual reseller
-                const reseller = await User.findById(actualResellerCode);
-
-                if (!reseller) {
-                    console.error(
-                        ` Commission Processing Failed: Reseller not found\n` +
-                        `Transaction ID: ${transaction._id}\n` +
-                        `Reseller ID: ${resellerId}`
-                    );
-                    return;
-                }
-
-
-
 
                 // 1. Create Commission record
                 await Commission.create({
                     reseller: transaction.metadata?.resellerId,
                     resellerName: transaction.metadata?.resellerName,
-
                     transaction: transaction._id,
                     bundle: transaction.bundleId,
                     amount: commissionAmount,

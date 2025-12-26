@@ -201,7 +201,7 @@ export async function initializePayment(req, res) {
             phoneNumberReceivingData: phoneNumberReceivingData,
 
             //reseller
-            resellerCode: resellerCode || null,
+            resellerCode: codeToUse || null,
             resellerId: reseller?._id?.toString() || null,
             resellerName : reseller?.name || null,
             resellerCommissionPercentage: reseller?.commissionRate || null,
@@ -220,7 +220,7 @@ export async function initializePayment(req, res) {
         bundleId: bundle._id,
         bundleIdName: bundle.Bundle_id,
         bundleName: bundle.name,
-        resellerCode: resellerCode || null,
+        resellerCode: codeToUse || null,
         baseCost: bundle.JBSP,
         amount: finalAmount,
         JBProfit: JBProfit,
