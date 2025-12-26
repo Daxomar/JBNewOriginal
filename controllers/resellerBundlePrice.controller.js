@@ -6,7 +6,7 @@ import User from '../models/user.model.js';
 
 //.ENV THIS GOES TO LATER HOHO
 // const SYSTEM_RESELLER_CODE = process.env.SYSTEM_RESELLER_CODE 
-const SYSTEM_RESELLER_CODE = 'SYS_JB_a8f39c1e4b7d0f29';
+const SYSTEM_RESELLER_CODE = process.env.SYSTEM_RESELLER_CODE ; // Example system reseller code
 
 
 export const getBundlesByResellerCode = async (req, res) => {
