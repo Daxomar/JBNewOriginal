@@ -77,10 +77,7 @@ export const getBundlesByResellerCode = async (req, res) => {
     res.json({
       success: true,
       data: bundlesForCustomer,
-      reseller: {
-        name: reseller.name,
-        resellerCode: reseller.resellerCode
-      }
+      
     });
 
   } catch (error) {

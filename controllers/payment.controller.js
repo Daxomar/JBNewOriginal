@@ -71,6 +71,9 @@ function makeReference(prefix = 'ref') {
 // }
 
 
+
+const SYSTEM_RESELLER_CODE = process.env.SYSTEM_RESELLER_CODE ; // Example system reseller code
+
 export async function initializePayment(req, res) {
     try {
 
@@ -109,26 +112,59 @@ export async function initializePayment(req, res) {
 
 
 
+
+
+        
        let reseller = null;
-   
-       console.log("Reseller Code received:", resellerCode);
-       if(resellerCode){
-        reseller = await User.findOne({ 
-            resellerCode,
-            // role:'user',
-            // isApproved: true
-        })
 
 
 
-        if(!reseller){
+        if (resellerCode && resellerCode === SYSTEM_RESELLER_CODE) {
+      return res.status(400).json({
+        success: false,
+        message: 'MotherFucker you cannot use the system reseller code here directly via the URL be smarter'
+      });
+    }
+    
+    // Now the FallBack happens when i want it to
+    const codeToUse = resellerCode || SYSTEM_RESELLER_CODE;
+
+
+    // Find reseller by code
+
+
+
+     reseller = await User.findOne({ 
+      resellerCode: codeToUse,
+      role: 'user',
+    //   ...(resellerCode && { isSystemAccount: { $ne: true } })
+      // Assuming resellers have role 'user'
+    //   isAccountVerified: true 
+    });
+
+
+
+      if(!reseller){
             return res.status(404).json({
                 status:false,
                 message:"Reseller not found, invalid reseller code"
             })
         }
 
-       }
+   
+    //    console.log("Reseller Code received:", resellerCode);
+    //    if(resellerCode){
+    //     reseller = await User.findOne({ 
+    //         resellerCode,
+    //         // role:'user',
+    //         // isApproved: true
+    //     })
+
+
+
+      
+
+    //    }
 
        //RSBP -- ResellerBundlePrice
       const RSBP = await getResellerBundlePrice (reseller._id, bundle._id)   // me picking up the actual reseller._id = "6322344..." and actual bundle id too as well bundle._id = "66663344..."
