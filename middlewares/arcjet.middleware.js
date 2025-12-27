@@ -7,7 +7,22 @@ import {
 
 const arcjetMiddleware = async (req, res, next) => {
     try {
-        const decision = await aj.protect(req, { requested: 1 }); // requested :1 means i take away 2 token from the bucket upon every request
+
+
+            const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || 
+               req.headers['cf-connecting-ip'] || 
+               req.ip || 
+               req.connection.remoteAddress
+
+    
+        console.log('Client IP:', ip);
+
+        const decision = await aj.protect(req, {
+             requested: 1,
+             ip: ip,
+            });
+            
+        // requested :1 means i take away 2 token from the bucket upon every request
         // console.log('Arcjet decision:', decision);
 
         if (decision.isDenied()) {
