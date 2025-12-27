@@ -2,7 +2,8 @@ import jwt from 'jsonwebtoken';
 import Commission from '../models/commission.model.js';
 import User from '../models/user.model.js'
 import { nanoid } from "nanoid";
-import { sendWelcomeEmail, sendOTPEmail, sendInviteEmail, sendApprovedEmail } from "../utils/send-email.js";
+// import { sendWelcomeEmail, sendOTPEmail, sendInviteEmail, sendApprovedEmail } from "../utils/send-email.js";
+import { sendWelcomeEmail, sendOTPEmail, sendInviteEmail, sendApprovedEmail } from "../services/emailServices/email.service.js";
 
 
 export const getReseller = async (req, res, next) => {

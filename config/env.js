@@ -1,8 +1,8 @@
-import {config} from 'dotenv';
-config({path : `.env.${process.env.NODE_ENV || 'development'}.local`});
+import { config } from 'dotenv';
+config({ path: `.env.${process.env.NODE_ENV || 'development'}.local` });
 
-export const { 
-    PORT ,
+export const {
+    PORT,
     SERVER_URL,
     NODE_ENV,
     DB_URI,
@@ -17,5 +17,10 @@ export const {
     EMAIL_PASSWORD,
     PAYSTACK_SECRET_KEY,
     FRONTEND_URL,
-    SYSTEM_RESELLER_CODE
-                   } = process.env;
+    SYSTEM_RESELLER_CODE,
+    SENDGRID_API_KEY,
+    EMAIL_FROM,
+    REDIS_HOST ,
+REDIS_PORT ,
+REDIS_PASSWORD ,
+} = process.env;

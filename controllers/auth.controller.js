@@ -3,7 +3,8 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken';
 import User from "../models/user.model.js";
 import { JWT_EXPIRES_IN, JWT_SECRET, JWT_REFRESH_SECRET } from "../config/env.js";
-import { sendWelcomeEmail, sendOTPEmail } from "../utils/send-email.js";
+// import { sendWelcomeEmail, sendOTPEmail } from "../utils/send-email.js";
+import { sendWelcomeEmail, sendOTPEmail } from "../services/emailServices/email.service.js";
 import { generateTokens } from '../utils/token_util.js';  ///NEW IMPORT
 
 // import { NODE_ENV, } from "../config/env.js";   //might have to uncomment this later as well as dotenv not sure
