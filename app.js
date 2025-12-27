@@ -25,6 +25,9 @@ import arcjetMiddleware from './middlewares/arcjet.middleware.js';
 
 const app = express();
 
+// Trust proxy for Render
+app.set('trust proxy', true);
+
 // CORS configuration - MUST be before other middlewares
 const allowedOrigins = [
   "https://5d6b8b3e9de6.ngrok-free.app",
