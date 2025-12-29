@@ -32,8 +32,8 @@ app.set('trust proxy', true);
 const allowedOrigins = [
   "https://5d6b8b3e9de6.ngrok-free.app",
   "https://joy-bundle-frontend.vercel.app",
- " https://www.joydatabundle.com",
- "https://joydatabundle.com",
+  "https://www.joydatabundle.com",
+  "https://joydatabundle.com",
   "http://localhost:3000",
   "http://localhost:5000"
 ];
