@@ -40,6 +40,15 @@ if (!name || !email || !password || !phoneNumber) {
             throw error;
         }
 
+
+        const existingPhoneNumber = await User.findOne({ phoneNumber });    
+
+        if (existingPhoneNumber) {
+            const error = new Error('Phone number already exists')
+            error.statusCode = 409;
+            throw error;
+        }
+
         //If newuser doesn't already exit continue flow and hash created passwords
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);

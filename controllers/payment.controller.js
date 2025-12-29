@@ -18,7 +18,7 @@ if (!PAYSTACK_SECRET_KEY) {
 
 
 // Constants
-const PAYSTACK_CHARGE_PERCENTAGE = 0.02; // 2%
+const PAYSTACK_CHARGE_PERCENTAGE = 0.03; // 3%
 
 
 

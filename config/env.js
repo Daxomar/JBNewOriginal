@@ -20,7 +20,7 @@ export const {
     SYSTEM_RESELLER_CODE,
     SENDGRID_API_KEY,
     EMAIL_FROM,
-    REDIS_HOST ,
-REDIS_PORT ,
-REDIS_PASSWORD ,
+    REDIS_HOST,
+    REDIS_PORT,
+    REDIS_PASSWORD,
 } = process.env;

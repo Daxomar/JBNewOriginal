@@ -1,5 +1,5 @@
 import Transaction from '../models/transaction.model.js';
-
+import BulkExport from '../models/bulkexport.model.js';
 
 
 /**
@@ -159,6 +159,142 @@ const getAnalytics = async (filter) => {
 
 
 
+// export const getTransactions = async (req, res) => {
+//   try {
+//     // Extract and validate query parameters
+//     const page = Math.max(1, parseInt(req.query.page) || 1);
+//     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
+//     const skip = (page - 1) * limit;
+
+//     const {
+//       status,
+//       network,
+//       startDate,
+//       endDate,
+//       search,
+//       resellerCode,
+//       sortBy = 'createdAt',
+//       sortOrder = 'desc'
+//     } = req.query;
+
+//     // Build filter query
+//     const filter = {};
+
+//     // Status filter
+//     if (status) {
+//       filter.status = status;
+//     }
+
+//     // Network filter
+//     if (network) {
+//       filter['metadata.network'] = network;
+//     }
+
+//     // Reseller filter
+//     if (resellerCode) {
+//       filter.resellerCode = resellerCode;
+//     }
+
+//     // Date range filter
+//     if (startDate || endDate) {
+//       filter.createdAt = {};
+//       if (startDate) {
+//         filter.createdAt.$gte = new Date(startDate);
+//       }
+//       if (endDate) {
+//         filter.createdAt.$lte = new Date(endDate);
+//       }
+//     }
+
+//     // Search filter (phone number, reference, email)
+//     if (search) {
+//       filter.$or = [
+//         { 'metadata.phoneNumberReceivingData': { $regex: search, $options: 'i' } },
+//         { reference: { $regex: search, $options: 'i' } },
+//         { email: { $regex: search, $options: 'i' } }
+//       ];
+//     }
+
+//     // Build sort object
+//     const sort = {};
+//     sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
+
+//     // Execute queries in parallel for better performance
+//     const [transactions, totalCount, analytics] = await Promise.all([
+//       // Get paginated transactions
+//       Transaction.find(filter)
+//         .sort(sort)
+//         .skip(skip)
+//         .limit(limit)
+//         .lean(),
+
+//       // Get total count for pagination
+//       Transaction.countDocuments(filter),
+
+//       // Get analytics data
+//       getAnalytics(filter)
+//     ]);
+
+//     // Calculate JBCP for each transaction
+//     const transactionsWithJBCP = transactions.map(transaction => {
+//       // JBCP (JoyBundle Cost Price) = baseCost - JBProfit
+//       const JBCP = transaction.baseCost - transaction.JBProfit;
+      
+//       return {
+//         transactionId: transaction.reference,
+//         dateTime: transaction.createdAt,
+//         customer: transaction.metadata?.phoneNumberReceivingData || 'N/A',
+//         network: transaction.metadata?.network?.toUpperCase() || 'N/A',
+//         bundleName: transaction.bundleName,
+//         JBProfit: transaction.JBProfit,
+//         status: transaction.status,
+//         deliveryStatus: transaction.deliveryStatus,
+//         amount: transaction.amount,
+//         baseCost: transaction.baseCost,
+//         JBCP: parseFloat(JBCP.toFixed(2)),
+//         currency: transaction.currency,
+//         resellerName: transaction.metadata?.resellerName || 'N/A',
+//         resellerProfit: transaction.metadata?.resellerProfit || 0,
+//         bundleData: transaction.metadata?.bundleData || 'N/A'
+//       };
+//     });
+
+//     // Calculate pagination metadata
+//     const totalPages = Math.ceil(totalCount / limit);
+//     const hasNextPage = page < totalPages;
+//     const hasPrevPage = page > 1;
+
+//     // Prepare response
+//     const response = {
+//       success: true,
+//       data: {
+//         transactions: transactionsWithJBCP,
+//         analytics,
+//         pagination: {
+//           currentPage: page,
+//           totalPages,
+//           totalItems: totalCount,
+//           itemsPerPage: limit,
+//           hasNextPage,
+//           hasPrevPage
+//         }
+//       },
+//       timestamp: new Date().toISOString()
+//     };
+
+//     res.status(200).json(response);
+
+//   } catch (error) {
+//     console.error('Error fetching transactions:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Failed to fetch transactions',
+//       error: error.message,
+//       timestamp: new Date().toISOString()
+//     });
+//   }
+// }
+
 export const getTransactions = async (req, res) => {
   try {
     // Extract and validate query parameters
@@ -178,12 +314,10 @@ export const getTransactions = async (req, res) => {
     } = req.query;
 
     // Build filter query
-    const filter = {};
-
-    // Status filter
-    if (status) {
-      filter.status = status;
-    }
+    const filter = {
+      // Default to successful transactions only
+      status: status || 'success'
+    };
 
     // Network filter
     if (network) {
@@ -237,7 +371,6 @@ export const getTransactions = async (req, res) => {
 
     // Calculate JBCP for each transaction
     const transactionsWithJBCP = transactions.map(transaction => {
-      // JBCP (JoyBundle Cost Price) = baseCost - JBProfit
       const JBCP = transaction.baseCost - transaction.JBProfit;
       
       return {
@@ -261,10 +394,7 @@ export const getTransactions = async (req, res) => {
 
     // Calculate pagination metadata
     const totalPages = Math.ceil(totalCount / limit);
-    const hasNextPage = page < totalPages;
-    const hasPrevPage = page > 1;
 
-    // Prepare response
     const response = {
       success: true,
       data: {
@@ -275,8 +405,8 @@ export const getTransactions = async (req, res) => {
           totalPages,
           totalItems: totalCount,
           itemsPerPage: limit,
-          hasNextPage,
-          hasPrevPage
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1
         }
       },
       timestamp: new Date().toISOString()
@@ -297,3 +427,173 @@ export const getTransactions = async (req, res) => {
 
 
 
+
+/////BULK EXPORT FUNCTION BELOW ///////
+
+
+// routes/transaction.route.js - ADD these routes
+
+// POST /api/v1/transactions/bulk-export
+// Exports 20 oldest pending transactions, changes status to processing, returns exportId
+export const bulkExportTransactions = async (req, res) => {
+  try {
+
+
+ 
+
+    // Find 20 oldest pending transactions
+    const pendingTransactions = await Transaction.find({
+      deliveryStatus: 'pending'
+    })
+    .sort({ createdAt: 1 }) // Oldest first
+    .limit(6)  // limit to 20 transactions fo
+    .lean();
+
+    if (pendingTransactions.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'No pending transactions to export',
+        exportId: null,
+        count: 0
+      });
+    }
+
+    // Create bulk export record
+    const bulkExport = new BulkExport({
+      exportId: generateUniqueId(), // Custom function to generate ID
+      transactionIds: pendingTransactions.map(t => t._id),
+      count: pendingTransactions.length,
+      status: 'processing', // Status of the export itself
+      createdAt: new Date()
+    });
+
+    await bulkExport.save();
+
+    // Update all transactions to 'processing' status
+    await Transaction.updateMany(
+      { _id: { $in: pendingTransactions.map(t => t._id) } },
+      { deliveryStatus: 'processing', exportId: bulkExport._id }
+    );
+
+    console.log(`✅ Bulk export created: ${bulkExport.exportId} with ${pendingTransactions.length} transactions`);
+
+    res.status(200).json({
+      success: true,
+      message: `Exported ${pendingTransactions.length} transactions`,
+      exportId: bulkExport.exportId,
+      count: pendingTransactions.length
+    });
+
+  } catch (error) {
+    console.error('Error in bulk export:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// GET /api/v1/transactions/bulk-export/:exportId
+// Get all transactions for a specific export
+export const getBulkExportTransactions = async (req, res) => {
+  try {
+    const { exportId } = req.params;
+
+    const bulkExport = await BulkExport.findOne({ exportId })
+      .populate({
+        path: 'transactionIds',
+        model: 'Transaction'
+      });
+
+    if (!bulkExport) {
+      return res.status(404).json({
+        success: false,
+        message: 'Export not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      exportId: bulkExport.exportId,
+      status: bulkExport.status,
+      count: bulkExport.transactionIds.length,
+      transactions: bulkExport.transactionIds
+    });
+
+  } catch (error) {
+    console.error('Error fetching bulk export:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// PATCH /api/v1/transactions/bulk-export/:exportId/mark-delivered
+// Bulk mark all transactions in export as delivered
+export const bulkMarkDelivered = async (req, res) => {
+  try {
+    const { exportId } = req.params;
+
+    // Find the bulk export
+    const bulkExport = await BulkExport.findOne({ exportId });
+
+    if (!bulkExport) {
+      return res.status(404).json({
+        success: false,
+        message: 'Export not found'
+      });
+    }
+
+    // Update all transactions to delivered
+    const updateResult = await Transaction.updateMany(
+      { _id: { $in: bulkExport.transactionIds } },
+      { 
+        deliveryStatus: 'delivered',
+        deliveredAt: new Date()
+      }
+    );
+
+    // Update bulk export status
+    bulkExport.status = 'completed';
+    await bulkExport.save();
+
+    console.log(`✅ Bulk mark delivered: ${exportId} - ${updateResult.modifiedCount} transactions updated`);
+
+    res.status(200).json({
+      success: true,
+      message: `Marked ${updateResult.modifiedCount} transactions as delivered`,
+      exportId: exportId,
+      modifiedCount: updateResult.modifiedCount
+    });
+
+  } catch (error) {
+    console.error('Error in bulk mark delivered:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// GET /api/v1/transactions/bulk-exports/list
+// Get all bulk exports with their statuses
+export const getAllBulkExports = async (req, res) => {
+  try {
+    const bulkExports = await BulkExport.find()
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      exports: bulkExports
+    });
+
+  } catch (error) {
+    console.error('Error fetching bulk exports:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+
+
+
+
+
+
+// Helper function to generate unique export ID
+function generateUniqueId() {
+  return `EXP-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+  // Example: EXP-1704067200000-A7X9K2L
+}
