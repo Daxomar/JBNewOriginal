@@ -31,6 +31,9 @@ const bulkExportSchema = new mongoose.Schema({
     index: true
   },
 
+  network: String,
+
+
   // When the export was created
   createdAt: {
     type: Date,

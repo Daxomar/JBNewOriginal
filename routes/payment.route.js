@@ -1,18 +1,18 @@
 
 import  { Router} from 'express';
 import { initializePayment,verifyPayment ,handleWebhook  } from '../controllers/payment.controller.js';
+import { strictLimiterIpBased, generalLimiter } from "../middlewares/ratelimiter.middleware.js";
 
 const paymentRouter = Router();
+// Webhook endpoint - NO LIMITER
+paymentRouter.post('/paystack/webhook', handleWebhook);
 
-// Initialize a transaction
-paymentRouter.post('/paystack/initialize', initializePayment  );
+// Initialize payment - STRICT IP-based (prevent payment spam)
+paymentRouter.post('/paystack/initialize', strictLimiterIpBased, initializePayment);
 
+// Verify a transaction - GENERAL (read-only)
+paymentRouter.get('/paystack/verify/:reference', generalLimiter, verifyPayment);
 
-// Verify a transaction by reference
-paymentRouter.get('/paystack/verify/:reference', verifyPayment );
-
-// Webhook endpoint
-paymentRouter.post('/paystack/webhook', handleWebhook );
 
 export default paymentRouter
 ;

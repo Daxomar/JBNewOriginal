@@ -41,6 +41,7 @@ export const trackOrdersByPhone = async (req, res) => {
          // SELECT ONLY NEEDED FIELDS
     const selectFields = [
       '_id',
+      'reference',
       'bundleName',
       'amount',
       'status',

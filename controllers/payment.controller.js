@@ -7,10 +7,11 @@ import ResellerBundlePrice from '../models/resellerBundlePrice.model.js';
 // import { PAYSTACK_SECRET_KEY} from "../config/env.js";
 import { processWebhookEvent  } from '../utils/paymentHelper.js';
 import {getResellerBundlePrice} from '../utils/getResellerBundlePrice.js'
-
+import { PAYSTACK_SECRET_KEY } from '../config/env.js';
 
 //CHANGE THIS TO YOUR ACTUAL PAYSTACK SECRET KEY IN PRODUCTION
-const PAYSTACK_SECRET_KEY = "sk_test_b4ecf231f7a4b52f2c5f933b5f5584e1d8dc9321";  //my test key not real right now
+
+
 if (!PAYSTACK_SECRET_KEY) {
     // Fail fast so developers know to set the env var
     throw new Error('PAYSTACK_SECRET_KEY environment variable is required');

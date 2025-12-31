@@ -103,25 +103,25 @@ export const generateOTPEmailTemplate = ({
   userName,
   otpCode,
   expiryMinutes,
-  supportLink = "#"
+  supportLink = "https://joydatabundle.com/support"
 }) => `
 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 0; background-color: #f4f7fa;">
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
         <tr>
-            <td style="background-color: #4a90e2; text-align: center; padding: 30px;">
-                <p style="font-size: 54px; line-height: 54px; font-weight: 800; color: #ffffff; margin: 0;">Dave SubDub</p>
+            <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); text-align: center; padding: 30px;">
+                <p style="font-size: 54px; line-height: 54px; font-weight: 800; color: #ffffff; margin: 0;">JoyDataBundle</p>
             </td>
         </tr>
         <tr>
             <td style="padding: 40px 30px; text-align: center;">                
-                <h1 style="font-size: 28px; margin-bottom: 25px; color: #4a90e2; font-weight: 700;">Verification Code</h1>
+                <h1 style="font-size: 28px; margin-bottom: 25px; color: #667eea; font-weight: 700;">Verification Code</h1>
                 
-                <p style="font-size: 16px; margin-bottom: 25px;">Hello <strong style="color: #4a90e2;">${userName || 'there'}</strong>,</p>
+                <p style="font-size: 16px; margin-bottom: 25px;">Hello <strong style="color: #667eea;">${userName || 'there'}</strong>,</p>
                 
                 <p style="font-size: 16px; margin-bottom: 30px;">Use the verification code below to complete your action:</p>
                 
-                <div style="background-color: #f0f7ff; border: 2px dashed #4a90e2; border-radius: 10px; margin: 30px 0; padding: 25px;">
-                    <p style="font-size: 32px; font-weight: 800; color: #4a90e2; margin: 0; letter-spacing: 8px; font-family: 'Courier New', monospace;">${otpCode}</p>
+                <div style="background-color: #f0f5ff; border: 2px dashed #667eea; border-radius: 10px; margin: 30px 0; padding: 25px;">
+                    <p style="font-size: 32px; font-weight: 800; color: #667eea; margin: 0; letter-spacing: 8px; font-family: 'Courier New', monospace;">${otpCode}</p>
                 </div>
                 
                 <table cellpadding="15" cellspacing="0" border="0" width="100%" style="background-color: #fff3cd; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #ffc107;">
@@ -135,22 +135,22 @@ export const generateOTPEmailTemplate = ({
                     </tr>
                 </table>
                 
-                <p style="font-size: 14px; color: #666; margin-top: 30px;">Having trouble? <a href="${supportLink}" style="color: #4a90e2; text-decoration: none;">Contact our support team</a></p>
+                <p style="font-size: 14px; color: #666; margin-top: 30px;">Having trouble? <a href="${supportLink}" style="color: #667eea; text-decoration: none;">Contact our support team</a></p>
                 
                 <p style="font-size: 16px; margin-top: 30px;">
                     Best regards,<br>
-                    <strong>The Dave SubDub Team</strong>
+                    <strong>The JoyDataBundle Team</strong>
                 </p>
             </td>
         </tr>
         <tr>
-            <td style="background-color: #f0f7ff; padding: 20px; text-align: center; font-size: 14px;">
-                <p style="margin: 0 0 10px;">
-                    SubDub Inc. | 123 Main St, Anytown, AN 12345
+            <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center; font-size: 14px;">
+                <p style="margin: 0 0 10px; color: #ffffff;">
+                    JoyDataBundle | Ghana
                 </p>
                 <p style="margin: 0;">
-                    <a href="#" style="color: #4a90e2; text-decoration: none; margin: 0 10px;">Privacy Policy</a> | 
-                    <a href="#" style="color: #4a90e2; text-decoration: none; margin: 0 10px;">Terms of Service</a>
+                    <a href="https://www.joydatabundle.com/privacy" style="color: #ffffff; text-decoration: none; margin: 0 10px;">Privacy Policy</a> | 
+                    <a href="https://www.joydatabundle.com/terms" style="color: #ffffff; text-decoration: none; margin: 0 10px;">Terms of Service</a>
                 </p>
             </td>
         </tr>
@@ -258,7 +258,7 @@ export const generateInviteEmailTemplate = ({
 //APPROVAL EMAIL TEMPLATE
 export const generateApprovedEmailTemplate = ({
   userName,
-  loginUrl = "localhost:3000/auth/signin"
+  loginUrl 
 }) => `
 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; background-color: #f0f6ff; padding: 20px;">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);">

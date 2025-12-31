@@ -1,7 +1,9 @@
 import User from '../models/user.model.js';
 import Transaction from '../models/transaction.model.js';
 import Commission from '../models/commission.model.js';
-import { sendTransactionReceiptEmail } from "../utils/send-email.js";
+import { sendTransactionReceiptEmail } from "../services/emailServices/email.service.js";
+
+
 
 // Separate async function for processing and Creating Transaction in DB
 export async function processWebhookEvent(event) {
@@ -55,7 +57,7 @@ export async function processWebhookEvent(event) {
             date: paid_at,
             phoneNumber: transaction.metadata.phoneNumberReceivingData,
             paymentMethod: channel,
-        }).then(() => console.log('Receipt email sent')).catch(err => console.error('Failed to send receipt email:', err));
+        }).then(() => console.log('Receipt email sent')).catch(err => console.error('Failed to send receipt email (JS:60 Utils/payhelper):', err));
 
 
         // ✅ Commission logic - only after payment confirmed

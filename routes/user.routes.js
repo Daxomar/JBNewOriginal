@@ -2,7 +2,7 @@ import  { Router} from 'express';
 
 import  {  authorizeRoles,  protect,   } from '../middlewares/auth.middleware.js'
 import { creatAccountByAdmin, getReseller, getResellers, resellerLink, getResellerCommission, inviteReseller,approveReseller,rejectReseller} from '../controllers/user.controller.js'
-
+import { generalLimiter, strictLimiter } from "../middlewares/ratelimiter.middleware.js";
 const userRouter = Router();
 
 // //GET /users - Get all users
@@ -55,38 +55,36 @@ const userRouter = Router();
 
 
 
-
-//CUSTOMER ENDPOINT PUBLIC 
-userRouter.get('/public/commission/:resellerCode', getResellerCommission);
-
-
-
+userRouter.get('/public/commission/:resellerCode', generalLimiter, getResellerCommission);
 
 /* ============================
    ADMIN ROUTES (STRICT)
    ============================ */
 
-// Create reseller account by admin
+// Create reseller account by admin - STRICT (write operation)
 userRouter.post(
   '/',
   protect,
   authorizeRoles("admin"),
+  strictLimiter,
   creatAccountByAdmin
 );
 
-// Get all resellers (admin dashboard)
+// Get all resellers (admin dashboard) - GENERAL (read-only)
 userRouter.get(
   '/',
   protect,
   authorizeRoles("admin"),
+  generalLimiter,
   getResellers
 );
 
-// Invite reseller (admin action)
+// Invite reseller (admin action) - STRICT (write operation)
 userRouter.post(
   '/invite',
   protect,
   authorizeRoles("admin"),
+  strictLimiter,
   inviteReseller
 );
 
@@ -94,17 +92,19 @@ userRouter.post(
    RESELLER ROUTES (AUTHENTICATED)
    ============================ */
 
-// Get logged-in reseller profile
+// Get logged-in reseller profile - GENERAL (read-only)
 userRouter.get(
   '/me',
   protect,
+  generalLimiter,
   getReseller
 );
 
-// Generate reseller referral link
+// Generate reseller referral link - GENERAL (read-only)
 userRouter.get(
   '/reseller-link',
   protect,
+  generalLimiter,
   resellerLink
 );
 
@@ -112,26 +112,30 @@ userRouter.get(
    ADMIN ROUTES CONTINUED
    ============================ */
 
-// Get reseller by ID (admin only) - MUST come after specific routes
+// Get reseller by ID (admin only) - GENERAL (read-only)
 userRouter.get(
   '/:id',
   protect,
   authorizeRoles("admin"),
+  generalLimiter,
   getReseller
 );
 
+// Approve reseller - STRICT (sensitive admin action)
 userRouter.patch(
   '/:userId/approve',
   protect,
   authorizeRoles('admin'),
+  strictLimiter,
   approveReseller
 );
 
-// Reject user (Admin only)
+// Reject user (Admin only) - STRICT (sensitive admin action)
 userRouter.patch(
   '/:userId/reject',
   protect,
   authorizeRoles('admin'),
+  strictLimiter,
   rejectReseller
 );
 

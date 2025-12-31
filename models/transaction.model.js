@@ -65,6 +65,7 @@ resellerCode: {
     type: String,
     enum: ['pending', 'success', 'failed'],
     default: 'pending',
+    index: true
   },
 
   channel: {
@@ -94,6 +95,12 @@ resellerCode: {
   deliveredAt: Date,
   failureReason: String,
  
+  exportId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "ExportJob",
+  index: true
+}
+
 
 
 

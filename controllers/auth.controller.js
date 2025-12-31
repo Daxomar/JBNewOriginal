@@ -68,7 +68,7 @@ if (!name || !email || !password || !phoneNumber) {
             name: newUsers[0].name,
             email: newUsers[0].email,
             phoneNumber: newUsers[0].phoneNumber,
-            role: newUsers[0].role,
+            role:'user' ,// Always set to 'user', ignore req.body.role
             isAccountVerified: newUsers[0].isAccountVerified,
             createdAt: newUsers[0].createdAt,
         };
@@ -113,10 +113,12 @@ if (!name || !email || !password || !phoneNumber) {
 
 
         // Sends the welcome email 
-        await sendWelcomeEmail({
+         sendWelcomeEmail({
             to: email,
             userName: name
-        })
+        }).catch(err => {
+  console.error("Failed to send welcome email (JS:120 AC):", err);
+});
 
         //Send The response
         res.status(201).json({

@@ -165,15 +165,15 @@ app.use(cookieParser());
 
 
 // Apply Arcjet middleware to ALL routes EXCEPT webhook
-app.use((req, res, next) => {
-  // Skip Arcjet for Paystack webhook
-  if (req.path === '/api/v1/payments/paystack/webhook') {
-    return next();
-  }
+// app.use((req, res, next) => {
+//   // Skip Arcjet for Paystack webhook
+//   if (req.path === '/api/v1/payments/paystack/webhook') {
+//     return next();
+//   }
   
-  // Apply Arcjet for all other routes
-  arcjetMiddleware(req, res, next);
-});
+//   // Apply Arcjet for all other routes
+//   arcjetMiddleware(req, res, next);
+// });
 
 
 

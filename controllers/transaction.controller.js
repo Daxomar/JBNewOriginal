@@ -435,60 +435,280 @@ export const getTransactions = async (req, res) => {
 
 // POST /api/v1/transactions/bulk-export
 // Exports 20 oldest pending transactions, changes status to processing, returns exportId
-export const bulkExportTransactions = async (req, res) => {
-  try {
+// export const bulkExportTransactions = async (req, res) => {
+//   try {
 
 
  
 
-    // Find 20 oldest pending transactions
-    const pendingTransactions = await Transaction.find({
-      deliveryStatus: 'pending'
-    })
-    .sort({ createdAt: 1 }) // Oldest first
-    .limit(6)  // limit to 20 transactions fo
-    .lean();
+//     // Find 20 oldest pending transactions
+//     const pendingTransactions = await Transaction.find({
+//       deliveryStatus: 'pending'
+//     })
+//     .sort({ createdAt: 1 }) // Oldest first
+//     .limit(10)  // limit to 20 transactions fo
+//     .lean();
 
-    if (pendingTransactions.length === 0) {
+//     if (pendingTransactions.length === 0) {
+//       return res.status(200).json({
+//         success: true,
+//         message: 'No pending transactions to export',
+//         exportId: null,
+//         count: 0
+//       });
+//     }
+
+//     // Create bulk export record
+//     const bulkExport = new BulkExport({
+//       exportId: generateUniqueId(), // Custom function to generate ID
+//       transactionIds: pendingTransactions.map(t => t._id),
+//       count: pendingTransactions.length,
+//       status: 'processing', // Status of the export itself
+//       createdAt: new Date()
+//     });
+
+//     await bulkExport.save();
+
+//     // Update all transactions to 'processing' status
+//     await Transaction.updateMany(
+//       { _id: { $in: pendingTransactions.map(t => t._id) } },
+//       { deliveryStatus: 'processing', exportId: bulkExport._id }
+//     );
+
+//     console.log(`✅ Bulk export created: ${bulkExport.exportId} with ${pendingTransactions.length} transactions`);
+
+//     res.status(200).json({
+//       success: true,
+//       message: `Exported ${pendingTransactions.length} transactions`,
+//       exportId: bulkExport.exportId,
+//       count: pendingTransactions.length
+//     });
+
+//   } catch (error) {
+//     console.error('Error in bulk export:', error);
+//     res.status(500).json({ success: false, error: error.message });
+//   }
+// };
+
+
+
+
+export const bulkExportTransactions = async (req, res) => {
+  const maxRetries = 3;
+  let retryCount = 0;
+
+  while (retryCount < maxRetries) {
+    const session = await Transaction.startSession();
+    
+    try {
+      await session.startTransaction();
+
+      // Extract and validate network parameter
+      const { network='mtn', limit = 5 } = req.body;
+      
+      // Validate network if provided
+      const validNetworks = ['mtn', 'at', 'telecel'];
+      if (network && !validNetworks.includes(network.toLowerCase())) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({
+          success: false,
+          error: `Invalid network. Must be one of: ${validNetworks.join(', ')}`
+        });
+      }
+
+      // Validate limit
+      const maxLimit = 10;
+      const parsedLimit = Math.min(Math.max(1, parseInt(limit)), maxLimit);
+
+      // Build query - IDEMPOTENCY: Only SUCCESS transactions with pending delivery and no exportId
+      const query = { 
+        status: 'success', // CRITICAL: Only successful transactions
+        deliveryStatus: 'pending', // That haven't been delivered yet
+        $or: [
+          { exportId: { $exists: false } },
+          { exportId: null }
+        ]
+      };
+      if (network) {
+        query['metadata.network'] = network.toLowerCase();
+      }
+
+
+
+      // Find successful pending transactions that haven't been exported yet
+      const pendingTransactions = await Transaction.find(query)
+        .sort({ createdAt: 1 })
+        .limit(parsedLimit)
+        .session(session)
+        .lean();
+
+      console.log("Successful Pending Transactions (not exported):", pendingTransactions.length);
+
+      // If no pending transactions found, abort and return early
+      if (pendingTransactions.length === 0) {
+        await session.abortTransaction();
+        session.endSession();
+        
+        return res.status(200).json({
+          success: true,
+          message: network 
+            ? `No successful pending transactions found for network: ${network}`
+            : 'No successful pending transactions to export',
+          exportId: null,
+          count: 0
+        });
+      }
+
+      const transactionIds = pendingTransactions.map(t => t._id);
+
+      console.log("Transaction IDs to export:", transactionIds.length);
+
+      // Create bulk export record FIRST to get a real ObjectId for locking
+      const bulkExport = new BulkExport({
+        exportId: generateUniqueId(),
+        transactionIds: [], // Will update after locking transactions
+        count: 0, // Will update after locking transactions
+        network: network || null,
+        status: 'processing',
+        createdAt: new Date()
+      });
+
+      await bulkExport.save({ session });
+
+      console.log("Created BulkExport with ID:", bulkExport._id);
+
+      // CRITICAL: Update transactions with the bulkExport._id to lock them
+      // This is idempotent - only grabs SUCCESS transactions with pending delivery that don't have an exportId yet
+      const updateResult = await Transaction.updateMany(
+        { 
+          _id: { $in: transactionIds },
+          status: 'success', // CRITICAL: Only successful transactions
+          deliveryStatus: 'pending',
+          $or: [
+            { exportId: { $exists: false } },
+            { exportId: null }
+          ]
+        },
+        { 
+          deliveryStatus: 'processing',
+          exportedAt: new Date(),
+          exportId: bulkExport._id // Lock with real ObjectId
+        },
+        { session }
+      );
+
+      console.log("Update Result:", updateResult);
+
+      // CRITICAL: If no transactions were updated, delete the export and abort
+      if (updateResult.modifiedCount === 0) {
+        // Clean up the unused export record
+        await BulkExport.deleteOne({ _id: bulkExport._id }, { session });
+        
+        await session.abortTransaction();
+        session.endSession();
+        
+        return res.status(200).json({
+          success: true,
+          message: 'All pending transactions are already being processed or exported',
+          exportId: null,
+          count: 0
+        });
+      }
+
+      // Use the actual modified count
+      const actualCount = updateResult.modifiedCount;
+      
+      // Warn if race condition occurred
+      if (actualCount !== pendingTransactions.length) {
+        console.warn(
+          `⚠️ Race condition: Found ${pendingTransactions.length} pending, ` +
+          `but only ${actualCount} were available when updating`
+        );
+      }
+
+      // Get the actual transaction IDs that were successfully locked
+      const lockedTransactions = await Transaction.find(
+        { 
+          _id: { $in: transactionIds },
+          exportId: bulkExport._id
+        },
+        { _id: 1 }
+      )
+      .session(session)
+      .lean();
+
+      const actualTransactionIds = lockedTransactions.map(t => t._id);
+
+      // Update the bulk export with actual data
+      await BulkExport.updateOne(
+        { _id: bulkExport._id },
+        { 
+          transactionIds: actualTransactionIds,
+          count: actualCount
+        },
+        { session }
+      );
+
+      // Commit the transaction
+      await session.commitTransaction();
+      session.endSession();
+
+      console.log(
+        `✅ Bulk export created: ${bulkExport.exportId} with ${actualCount} transaction${actualCount !== 1 ? 's' : ''}` +
+        (network ? ` (network: ${network})` : '')
+      );
+
       return res.status(200).json({
         success: true,
-        message: 'No pending transactions to export',
-        exportId: null,
-        count: 0
+        message: `Exported ${actualCount} transaction${actualCount !== 1 ? 's' : ''}` +
+          (network ? ` from ${network}` : ''),
+        exportId: bulkExport.exportId,
+        count: actualCount,
+        network: network || null
+      });
+
+    } catch (error) {
+      // Handle write conflicts with retry
+      if (error.code === 112 && error.codeName === 'WriteConflict' && retryCount < maxRetries - 1) {
+        console.log(`⚠️ Write conflict detected, retrying... (attempt ${retryCount + 1}/${maxRetries})`);
+        
+        // Abort transaction if still active
+        if (session.inTransaction()) {
+          await session.abortTransaction();
+        }
+        session.endSession();
+        
+        retryCount++;
+        // Small delay before retry
+        await new Promise(resolve => setTimeout(resolve, 50 * retryCount));
+        continue; // Retry the operation
+      }
+
+      // For other errors or max retries reached, abort and return error
+      if (session.inTransaction()) {
+        await session.abortTransaction();
+      }
+      session.endSession();
+      
+      console.error('Error in bulk export:', error);
+      
+      return res.status(500).json({ 
+        success: false, 
+        error: error.message 
       });
     }
-
-    // Create bulk export record
-    const bulkExport = new BulkExport({
-      exportId: generateUniqueId(), // Custom function to generate ID
-      transactionIds: pendingTransactions.map(t => t._id),
-      count: pendingTransactions.length,
-      status: 'processing', // Status of the export itself
-      createdAt: new Date()
-    });
-
-    await bulkExport.save();
-
-    // Update all transactions to 'processing' status
-    await Transaction.updateMany(
-      { _id: { $in: pendingTransactions.map(t => t._id) } },
-      { deliveryStatus: 'processing', exportId: bulkExport._id }
-    );
-
-    console.log(`✅ Bulk export created: ${bulkExport.exportId} with ${pendingTransactions.length} transactions`);
-
-    res.status(200).json({
-      success: true,
-      message: `Exported ${pendingTransactions.length} transactions`,
-      exportId: bulkExport.exportId,
-      count: pendingTransactions.length
-    });
-
-  } catch (error) {
-    console.error('Error in bulk export:', error);
-    res.status(500).json({ success: false, error: error.message });
   }
+
+  // Max retries exceeded
+  return res.status(500).json({
+    success: false,
+    error: 'Operation failed after multiple retries due to write conflicts. Please try again.'
+  });
 };
+
+
+
 
 // GET /api/v1/transactions/bulk-export/:exportId
 // Get all transactions for a specific export

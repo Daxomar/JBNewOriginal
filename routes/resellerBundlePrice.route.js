@@ -11,24 +11,23 @@ import {
 } from '../controllers/resellerBundlePrice.controller.js';
 
 import  {  authorizeRoles,  protect,   } from '../middlewares/auth.middleware.js'
-
+import { strictLimiterIpBased, generalLimiter, strictLimiter } from "../middlewares/ratelimiter.middleware.js";
 
 
 const resellerBundlePriceRouter = Router();
 
 
 
-// PUBLIC: Get bundles with reseller's custom prices (for customers)  I have two because one doesnt take any reseller code and uses the system code instead should humans decide to remove it from the url mhawhahaha
-resellerBundlePriceRouter.get('/public', getBundlesByResellerCode);
+// Public endpoints - no auth needed, IP-based general limit
+resellerBundlePriceRouter.get('/public', generalLimiter, getBundlesByResellerCode);
 
-resellerBundlePriceRouter.get('/public/:resellerCode', getBundlesByResellerCode);
+resellerBundlePriceRouter.get('/public/:resellerCode', generalLimiter, getBundlesByResellerCode);
 
+// Get all bundles with reseller's custom pricing - authenticated, general limit (read-only)
+resellerBundlePriceRouter.get('/pricing', protect, generalLimiter, getResellerPricing);
 
-// Get all bundles with reseller's custom pricing
-resellerBundlePriceRouter.get('/pricing',protect, getResellerPricing);
-
-// Set custom price for single bundle
-resellerBundlePriceRouter.post('/pricing/set', protect,  setCustomPrice);
+// Set custom price for single bundle - authenticated, strict limit (write operation)
+resellerBundlePriceRouter.post('/pricing/set', protect, strictLimiter, setCustomPrice);
 
 
 export default resellerBundlePriceRouter;       

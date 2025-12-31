@@ -318,8 +318,9 @@ export const getResellers = async (req, res, next) => {
     const safeUsers = users.map(user => ({
       _id: user._id,
       name: user.name,
-      email: user.email,
-      role: user.role || 'reseller',
+      email: user.email ,
+      phoneNumber: user.phoneNumber,
+      role: user.role || 'user',
       status: user.isApproved ? 'active' : 'pending',
       isApproved: user.isApproved || false,
       isAccountVerified: user.isAccountVerified || false,
@@ -623,7 +624,7 @@ export const inviteReseller = async (req, res) => {
     );
 
     // Create invite link
-    const inviteLink = `https://7b4b6edf4d89.ngrok-free.app/auth/register?token=${inviteToken}&email=${encodeURIComponent(email)}`;
+    const inviteLink = `${process.env.FRONTEND_URL}/auth/register?token=${inviteToken}&email=${encodeURIComponent(email)}`;
 
     // Send invite email
     await sendInviteEmail({
@@ -678,6 +679,17 @@ export const approveReseller = async (req, res) => {
 
     user.isApproved = true; // e.g., JOHN-a1b2c3
     await user.save();
+
+
+
+    // Send approved email notification
+    sendApprovedEmail({
+      to: user.email,
+      userName: user.name,
+      loginUrl: `${process.env.FRONTEND_URL}/auth/login`
+    }).catch(err => {
+  console.error("Failed to send Approval Email :", err);
+});;
 
     return res.status(200).json({
       success: true,
