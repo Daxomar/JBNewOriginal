@@ -504,7 +504,7 @@ export const bulkExportTransactions = async (req, res) => {
       await session.startTransaction();
 
       // Extract and validate network parameter
-      const { network='mtn', limit = 5 } = req.body;
+      const { network='at', limit = 5 } = req.body;
       
       // Validate network if provided
       const validNetworks = ['mtn', 'at', 'telecel'];

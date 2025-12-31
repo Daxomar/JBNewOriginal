@@ -19,14 +19,14 @@ import connectToDatabase from './database/mongodb.js';
 
 //MIDDLEWARES
 import errorMiddleware from './middlewares/error.middleware.js';
-import arcjetMiddleware from './middlewares/arcjet.middleware.js';
+// import arcjetMiddleware from './middlewares/arcjet.middleware.js';
 
 
 
 const app = express();
 
 // Trust proxy for Render
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
 
 // CORS configuration - MUST be before other middlewares
 const allowedOrigins = [

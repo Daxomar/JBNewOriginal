@@ -1,6 +1,6 @@
 import { Router} from 'express';
 import { signUp, signIn, signOut, sendVerifyOtp, verifyEmail, isAuthenicated, sendResetOtp, resetPassword, verifyresetOtp,  refresh } from '../controllers/auth.controller.js';
-import arcjetMiddleware from '../middlewares/arcjet.middleware.js';
+// import arcjetMiddleware from '../middlewares/arcjet.middleware.js';
 import {userAuthCookie, protect} from '../middlewares/auth.middleware.js';
 import { strictLimiter, strictLimiterIpBased, generalLimiter,lenientLimiter} from "../middlewares/ratelimiter.middleware.js";
 
