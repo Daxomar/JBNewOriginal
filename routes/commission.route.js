@@ -24,9 +24,9 @@ commissionRouter.get('/my-commissions', protect, generalLimiter, getMyCommission
 // commissionRouter.get('/my-commissions', getMyCommissions);
 
 // Get commission statistics
-commissionRouter.get('/stats', getCommissionStats);
+// commissionRouter.get('/stats', getCommissionStats);
 
 // Get commissions by month
-commissionRouter.get('/by-month', getCommissionsByMonth);
+// commissionRouter.get('/by-month', getCommissionsByMonth);
 
 export default commissionRouter;

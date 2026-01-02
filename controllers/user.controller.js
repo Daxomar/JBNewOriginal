@@ -273,11 +273,39 @@ export const getResellers = async (req, res, next) => {
             totalCommissionEarned: { $sum: '$totalCommissionEarned' },
             totalCommissionPaidOut: { $sum: '$totalCommissionPaidOut' },
             totalResellers: { $sum: 1 },
+            // activeResellers: {
+            //   $sum: { $cond: [{ $eq: ['$isApproved', true] }, 1, 0] }
+            // },
+
+            // Active resellers must have BOTH isApproved AND isAccountVerified as true
             activeResellers: {
-              $sum: { $cond: [{ $eq: ['$isApproved', true] }, 1, 0] }
+              $sum: { 
+                $cond: [
+                  { 
+                    $and: [
+                      { $eq: ['$isApproved', true] },
+                      { $eq: ['$isAccountVerified', true] }
+                    ]
+                  }, 
+                  1, 
+                  0
+                ] 
+              }
             },
-            pendingResellers: {
-              $sum: { $cond: [{ $eq: ['$isApproved', false] }, 1, 0] }
+            // pendingResellers: {
+            //   $sum: { $cond: [{ $eq: ['$isApproved', false] }, 1, 0] }
+             pendingResellers: {
+              $sum: { 
+                $cond: [
+                  { 
+                    $or: [
+                      { $eq: ['$isApproved', false] },
+                      { $eq: ['$isAccountVerified', false] }
+                    ]
+                  }, 
+                  1, 
+                  0
+                ] }
             }
           }
         }

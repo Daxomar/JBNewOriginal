@@ -20,6 +20,10 @@ const transactionSchema = new mongoose.Schema({
     required: true,
   },
 
+    JBCP: {
+    type: Number,
+    required: true,
+  },
 
   bundleName: {
     type: String,
@@ -59,6 +63,7 @@ resellerCode: {
     type: String,
     required: true,
     unique: true,
+    index:true,
   },
 
   status: {

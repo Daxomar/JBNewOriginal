@@ -5,13 +5,15 @@ import { strictLimiterIpBased, generalLimiter } from "../middlewares/ratelimiter
 
 const paymentRouter = Router();
 // Webhook endpoint - NO LIMITER
-paymentRouter.post('/paystack/webhook', handleWebhook);
 
+paymentRouter.post('/paystack/webhook', handleWebhook);
 // Initialize payment - STRICT IP-based (prevent payment spam)
 paymentRouter.post('/paystack/initialize', strictLimiterIpBased, initializePayment);
 
 // Verify a transaction - GENERAL (read-only)
 paymentRouter.get('/paystack/verify/:reference', generalLimiter, verifyPayment);
+
+
 
 
 export default paymentRouter

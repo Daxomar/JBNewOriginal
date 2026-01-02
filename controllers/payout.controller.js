@@ -123,7 +123,7 @@ export const requestPayout = async (req, res) => {
         const availableBalance = calculateAvailableBalance(user);
 
 
-        console.log("Available balance over here:", availableBalance)
+        
 
         if (availableBalance <= 0) {
             await session.abortTransaction();
@@ -229,7 +229,7 @@ export const getMyPayouts = async (req, res) => {
 
         // Get available balance
         const user = await User.findById(resellerId).select('totalCommissionEarned totalCommissionPaidOut');
-        console.log("THE ONLY THING SHOWING FOR THIS RESELLER NOW :", user)
+    
 
         const availableBalance = calculateAvailableBalance(user);
 

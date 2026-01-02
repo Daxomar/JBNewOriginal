@@ -5,8 +5,8 @@ import Bundle from '../models/bundle.model.js'
 import Transaction from '../models/transaction.model.js';
 import ResellerBundlePrice from '../models/resellerBundlePrice.model.js';
 // import { PAYSTACK_SECRET_KEY} from "../config/env.js";
-import { processWebhookEvent  } from '../utils/paymentHelper.js';
-import {getResellerBundlePrice} from '../utils/getResellerBundlePrice.js'
+import { processWebhookEvent } from '../utils/paymentHelper.js';
+import { getResellerBundlePrice } from '../utils/getResellerBundlePrice.js'
 import { PAYSTACK_SECRET_KEY } from '../config/env.js';
 
 //CHANGE THIS TO YOUR ACTUAL PAYSTACK SECRET KEY IN PRODUCTION
@@ -73,7 +73,7 @@ function makeReference(prefix = 'ref') {
 
 
 
-const SYSTEM_RESELLER_CODE = process.env.SYSTEM_RESELLER_CODE ; // Example system reseller code
+const SYSTEM_RESELLER_CODE = process.env.SYSTEM_RESELLER_CODE; // Example system reseller code
 
 export async function initializePayment(req, res) {
     try {
@@ -81,9 +81,9 @@ export async function initializePayment(req, res) {
         //I will use req.params later when i have a frontend to pass reseller code
         // const {resellerCode} = req.params
 
-        const { email, bundleId, phoneNumberReceivingData, resellerCode , callback_url } = req.body || {};
+        const { email, bundleId, phoneNumberReceivingData, resellerCode, callback_url } = req.body || {};
 
-        
+
         if (!email || !bundleId || !phoneNumberReceivingData) {
             return res.status(400).json({
                 status: false,
@@ -115,76 +115,76 @@ export async function initializePayment(req, res) {
 
 
 
-        
-       let reseller = null;
+
+        let reseller = null;
 
 
 
         if (resellerCode && resellerCode === SYSTEM_RESELLER_CODE) {
-      return res.status(400).json({
-        success: false,
-        message: 'MotherFucker you cannot use the system reseller code here directly via the URL be smarter'
-      });
-    }
-    
-    // Now the FallBack happens when i want it to
-    const codeToUse = resellerCode || SYSTEM_RESELLER_CODE;
+            return res.status(400).json({
+                success: false,
+                message: 'MotherFucker you cannot use the system reseller code here directly via the URL be smarter'
+            });
+        }
+
+        // Now the FallBack happens when i want it to
+        const codeToUse = resellerCode || SYSTEM_RESELLER_CODE;
 
 
-    // Find reseller by code
-
-
-
-     reseller = await User.findOne({ 
-      resellerCode: codeToUse,
-      role: 'user',
-    //   ...(resellerCode && { isSystemAccount: { $ne: true } })
-      // Assuming resellers have role 'user'
-    //   isAccountVerified: true 
-    });
+        // Find reseller by code
 
 
 
-      if(!reseller){
+        reseller = await User.findOne({
+            resellerCode: codeToUse,
+            role: 'user',
+            //   ...(resellerCode && { isSystemAccount: { $ne: true } })
+            // Assuming resellers have role 'user'
+            //   isAccountVerified: true 
+        });
+
+
+
+        if (!reseller) {
             return res.status(404).json({
-                status:false,
-                message:"Reseller not found, invalid reseller code"
+                status: false,
+                message: "Reseller not found, invalid reseller code"
             })
         }
 
-   
-    //    console.log("Reseller Code received:", resellerCode);
-    //    if(resellerCode){
-    //     reseller = await User.findOne({ 
-    //         resellerCode,
-    //         // role:'user',
-    //         // isApproved: true
-    //     })
+
+        //    console.log("Reseller Code received:", resellerCode);
+        //    if(resellerCode){
+        //     reseller = await User.findOne({ 
+        //         resellerCode,
+        //         // role:'user',
+        //         // isApproved: true
+        //     })
 
 
 
-      
-
-    //    }
-
-       //RSBP -- ResellerBundlePrice
-      const RSBP = await getResellerBundlePrice (reseller._id, bundle._id)   // me picking up the actual reseller._id = "6322344..." and actual bundle id too as well bundle._id = "66663344..."
-       
 
 
-       //Commission Calculation Based on Reseller Rate
-    //    const commissionAmount = bundle.JBSP * (reseller?.commissionRate || 0) / 100;
-       const commissionAmount = RSBP.commission;
+        //    }
 
-       const finalAmount = bundle.JBSP + commissionAmount + ((bundle.JBSP + commissionAmount) * PAYSTACK_CHARGE_PERCENTAGE) ;
-
-       console.log("Commission Amount:", commissionAmount);
-       console.log("Final Amount to charge customer:", finalAmount);
+        //RSBP -- ResellerBundlePrice
+        const RSBP = await getResellerBundlePrice(reseller._id, bundle._id)   // me picking up the actual reseller._id = "6322344..." and actual bundle id too as well bundle._id = "66663344..."
 
 
-       //JB Profit Calculation 
-       const JBProfit = bundle.JBSP - bundle.JBCP;
-       console.log("JoyBundle Profit on this sale:", JBProfit);
+
+        //Commission Calculation Based on Reseller Rate
+        //    const commissionAmount = bundle.JBSP * (reseller?.commissionRate || 0) / 100;
+        const commissionAmount = RSBP.commission;
+
+        const finalAmount = bundle.JBSP + commissionAmount + ((bundle.JBSP + commissionAmount) * PAYSTACK_CHARGE_PERCENTAGE);
+
+        console.log("Commission Amount:", commissionAmount);
+        console.log("Final Amount to charge customer:", finalAmount);
+
+
+        //JB Profit Calculation 
+        const JBProfit = bundle.JBSP - bundle.JBCP;
+        console.log("JoyBundle Profit on this sale:", JBProfit);
 
 
 
@@ -204,32 +204,33 @@ export async function initializePayment(req, res) {
             //reseller
             resellerCode: codeToUse || null,
             resellerId: reseller?._id?.toString() || null,
-            resellerName : reseller?.name || null,
+            resellerName: reseller?.name || null,
             resellerCommissionPercentage: reseller?.commissionRate || null,
             resellerProfit: commissionAmount || null
         };
-        
-
- console.log(metadata)
 
 
-      //making the reference more unique by adding JBpay
-    const reference =  makeReference("JBpay")
+        console.log(metadata)
 
-      const transaction = await Transaction.create({
-        email,
-        bundleId: bundle._id,
-        bundleIdName: bundle.Bundle_id,
-        bundleName: bundle.name,
-        resellerCode: codeToUse || null,
-        baseCost: bundle.JBSP,
-        amount: finalAmount,
-        JBProfit: JBProfit,
-        currency: 'GHS',
-        reference,
-        status: 'pending',
-        metadata: metadata,
-    })
+
+        //making the reference more unique by adding JBpay
+        const reference = makeReference("JBpay")
+
+        const transaction = await Transaction.create({
+            email,
+            bundleId: bundle._id,
+            bundleIdName: bundle.Bundle_id,
+            bundleName: bundle.name,
+            JBCP: bundle.JBCP,
+            resellerCode: codeToUse || null,
+            baseCost: bundle.JBSP,
+            amount: finalAmount,
+            JBProfit: JBProfit,
+            currency: 'GHS',
+            reference,
+            status: 'pending',
+            metadata: metadata,
+        })
 
 
         // 3. Convert price into minor currency unit (GHS → pesewas)
@@ -246,9 +247,9 @@ export async function initializePayment(req, res) {
         };
 
 
-    //    if (callback_url){
-    //     payload.callback_url = `${callback_url}?reference=${reference}`
-    //    }
+        //    if (callback_url){
+        //     payload.callback_url = `${callback_url}?reference=${reference}`
+        //    }
 
 
         //  commented this out
@@ -257,12 +258,12 @@ export async function initializePayment(req, res) {
 
         // 5. Initialize payment via Paystack
         const { data } = await paystack.post('/transaction/initialize', payload);
-        
+
         return res.status(200).json({
             status: true,
             message: "Payment initialized",
             data,
-            
+
 
         });
 
@@ -316,7 +317,7 @@ export async function verifyPayment(req, res) {
 
 //     // Find the pending transaction
 //     const transaction = await Transaction.findOne({ reference });
-    
+
 //     if (!transaction) {
 //         console.error('Transaction not found for reference:', reference);
 //         return;
@@ -337,12 +338,12 @@ export async function verifyPayment(req, res) {
 //             paid_at: event.data.paid_at,
 //             ip_address: event.data.ip_address
 //         };
-        
+
 //         await transaction.save();
 
 //         console.log('Transaction completed successfully:', reference);
 //     }
-    
+
 //     // Handle failed charges
 //     else if (event.event === 'charge.failed') {
 //         transaction.status = 'failed';
@@ -350,12 +351,12 @@ export async function verifyPayment(req, res) {
 //             reason: event.data.gateway_response,
 //             failed_at: event.data.paid_at || new Date()
 //         };
-        
+
 //         await transaction.save();
-        
+
 //         console.log('Transaction failed:', reference);
 //     }
-    
+
 //     // Log other events but don't process
 //     else {
 //         console.log('Ignoring event:', event.event);
@@ -371,7 +372,7 @@ export async function handleWebhook(req, res) {
 
         const rawBody = req.rawBody || Buffer.from(JSON.stringify(req.body));
         const computed = createHmac('sha512', PAYSTACK_SECRET_KEY).update(rawBody).digest('hex');
-  
+
 
 
 
@@ -383,19 +384,27 @@ export async function handleWebhook(req, res) {
         const event = req.body;
         // Minimal example: log and return 200
         // TODO: replace with your business logic (update DB, fulfill order, etc.)
-        console.log('Paystack webhook received:', event.event, event.data?.reference);
-        console.log("full webhook data:", event);
+        console.log('✅Paystack webhook received:', event.data?.reference);
         
-        //I reply back to paystack quickly first
-         res.status(200).json({ status: true});
+
+
+        res.status(200).json({ status: true });
+
+        console.log('✅Paystack 200 response sent back');
 
         // external Utility function to process webhook asynchronously 
         processWebhookEvent(event).catch(err => {
-            console.error('Async webhook processing error:', err);
-        })
-        
-        return;
+            const errorLog = {
+                timestamp: new Date().toISOString(),
+                reference: event.data?.reference,
+                error: err.message,
+                stack: err.stack
+            };
 
+            // Log to console (Render captures all console output)
+            console.error('⚠️  WEBHOOK PROCESSING FAILED PAYMENT SUCCESS BUT MIGHT NOT BE MARKED IN DB:');
+            console.error(JSON.stringify(errorLog, null, 2));
+        })
 
     } catch (err) {
         console.error('Webhook handler error', err);

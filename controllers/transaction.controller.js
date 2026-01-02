@@ -11,7 +11,7 @@ const getAnalytics = async (filter) => {
     const successFilter = { ...filter, status: 'success' };
 
     // Aggregate analytics in parallel
-    const [revenueData, ordersData, profitData, costData, activeOrdersData] = await Promise.all([
+    const [revenueData, ordersData, profitData, costData, activeOrdersData, processingOrdersData, deliveredOrderData] = await Promise.all([
       // Total Revenue (sum of amounts for successful transactions)
       Transaction.aggregate([
         { $match: successFilter },
@@ -53,24 +53,40 @@ const getAnalytics = async (filter) => {
       Transaction.countDocuments({
         ...successFilter,
         deliveryStatus: 'pending'
-      })
+      }),
+
+
+      //Processing Transactions
+      Transaction.countDocuments({
+        ...successFilter,
+        deliveryStatus: 'processing'
+      }),
+
+
+            Transaction.countDocuments({
+        ...successFilter,
+        deliveryStatus: 'delivered'
+      }),
+
     ]);
 
 
-  console.log("CostData",costData)
-  console.log("ProfitData", profitData)
+   
 
 
 
-   const PAYSTACK_FEE = 0.02; // 1.5% Paystack fee constant
+    const PAYSTACK_FEE = 0.02; // 1.5% Paystack fee constant
 
 
     // Calculate totals
     const totalRevenue = revenueData[0]?.totalRevenue || 0;
     const totalOrders = ordersData || 0;
     const totalJBProfit = profitData[0]?.totalJBProfit || 0;
-    const developersProfit = totalJBProfit * 0.20; // 20% of JBProfit
+    const developersProfit = totalJBProfit * 0.20 || 0; // 20% of JBProfit
     const activeOrders = activeOrdersData || 0;
+    const processingOrders = processingOrdersData || 0;
+    const deliveredOrders = deliveredOrderData || 0; 
+
 
     // Calculate total JBCP (baseCost - JBProfit for all successful transactions)
     const totalBaseCost = costData[0]?.totalBaseCost || 0;
@@ -80,28 +96,28 @@ const getAnalytics = async (filter) => {
 
 
     // Calculate Paystack fees and revenue before fees
-    const totalRevenueBeforePaystackAddition= totalRevenue / (1 + PAYSTACK_FEE);
+    const totalRevenueBeforePaystackAddition = totalRevenue / (1 + PAYSTACK_FEE);
     const totalPaystackFees = totalRevenue - totalRevenueBeforePaystackAddition;
 
     //TOTAL RESELLERS PROFIT FOR NOW, BUT WILL MOST LIKELY USE  CREATED BY ME CHUKS
     const totalResellerProfits = totalRevenue - totalBaseCost - totalPaystackFees || 0
     const totalActualJBCPCost = totalRevenue - totalJBProfit - totalResellerProfits - totalPaystackFees || 0.
     const totalCost = totalResellerProfits + totalActualJBCPCost || 0;
-    console.log(totalResellerProfits)
-    console.log(totalActualJBCPCost)
-    console.log(totalCost)
+
 
     // Calculate additional metrics
     const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
     const profitMargin = totalRevenue > 0 ? (totalJBProfit / totalRevenue) * 100 : 0;
 
-   console.log("Total Paystack Fees", totalPaystackFees)
-   console.log("Total Revenue before Paystack addition", totalRevenueBeforePaystackAddition)
+    console.log("Total Paystack Fees", totalPaystackFees)
+    console.log("Total Revenue before Paystack addition", totalRevenueBeforePaystackAddition)
 
     return {
       totalRevenue: parseFloat(totalRevenue.toFixed(2)),
       totalOrders,
       activeOrders,
+      processingOrders,
+      deliveredOrders,
       totalJBProfit: parseFloat(totalJBProfit.toFixed(2)),
       developersProfit: parseFloat(developersProfit.toFixed(2)),
       totalCost: parseFloat(totalCost.toFixed(2)),
@@ -109,7 +125,7 @@ const getAnalytics = async (filter) => {
       averageOrderValue: parseFloat(averageOrderValue.toFixed(2)),
       profitMargin: parseFloat(profitMargin.toFixed(2)),
       totalResellerProfits: parseFloat(totalResellerProfits.toFixed(2)),
-      totalActualJBCPCost:parseFloat(totalActualJBCPCost.toFixed(2)),
+      totalActualJBCPCost: parseFloat(totalActualJBCPCost.toFixed(2)),
       totalPaystackFees: parseFloat(totalPaystackFees.toFixed(2)),
       totalRevenueBeforePaystackAddition: parseFloat(totalRevenueBeforePaystackAddition.toFixed(2)),
 
@@ -122,16 +138,18 @@ const getAnalytics = async (filter) => {
       totalRevenue: 0,
       totalOrders: 0,
       activeOrders: 0,
+      deliveredOrders:0,
+      processingOrders: 0,
       totalJBProfit: 0,
       developersProfit: 0,
       totalCost: 0,
       totalJBCP: 0,
       averageOrderValue: 0,
-      totalResellerProfits:0,
-      totalActualJBCPCost:0,
+      totalResellerProfits: 0,
+      totalActualJBCPCost: 0,
       profitMargin: 0,
       totalPaystackFees: 0,
-      totalRevenueBeforePaystackAddition: 0,  
+      totalRevenueBeforePaystackAddition: 0,
       currency: 'GHS',
       error: 'Failed to calculate some analytics'
     };
@@ -239,7 +257,7 @@ const getAnalytics = async (filter) => {
 //     const transactionsWithJBCP = transactions.map(transaction => {
 //       // JBCP (JoyBundle Cost Price) = baseCost - JBProfit
 //       const JBCP = transaction.baseCost - transaction.JBProfit;
-      
+
 //       return {
 //         transactionId: transaction.reference,
 //         dateTime: transaction.createdAt,
@@ -372,7 +390,7 @@ export const getTransactions = async (req, res) => {
     // Calculate JBCP for each transaction
     const transactionsWithJBCP = transactions.map(transaction => {
       const JBCP = transaction.baseCost - transaction.JBProfit;
-      
+
       return {
         transactionId: transaction.reference,
         dateTime: transaction.createdAt,
@@ -439,7 +457,7 @@ export const getTransactions = async (req, res) => {
 //   try {
 
 
- 
+
 
 //     // Find 20 oldest pending transactions
 //     const pendingTransactions = await Transaction.find({
@@ -499,13 +517,13 @@ export const bulkExportTransactions = async (req, res) => {
 
   while (retryCount < maxRetries) {
     const session = await Transaction.startSession();
-    
+
     try {
       await session.startTransaction();
 
       // Extract and validate network parameter
-      const { network='at', limit = 5 } = req.body;
-      
+      const { network, limit } = req.body;
+
       // Validate network if provided
       const validNetworks = ['mtn', 'at', 'telecel'];
       if (network && !validNetworks.includes(network.toLowerCase())) {
@@ -522,7 +540,7 @@ export const bulkExportTransactions = async (req, res) => {
       const parsedLimit = Math.min(Math.max(1, parseInt(limit)), maxLimit);
 
       // Build query - IDEMPOTENCY: Only SUCCESS transactions with pending delivery and no exportId
-      const query = { 
+      const query = {
         status: 'success', // CRITICAL: Only successful transactions
         deliveryStatus: 'pending', // That haven't been delivered yet
         $or: [
@@ -549,10 +567,10 @@ export const bulkExportTransactions = async (req, res) => {
       if (pendingTransactions.length === 0) {
         await session.abortTransaction();
         session.endSession();
-        
+
         return res.status(200).json({
           success: true,
-          message: network 
+          message: network
             ? `No successful pending transactions found for network: ${network}`
             : 'No successful pending transactions to export',
           exportId: null,
@@ -581,7 +599,7 @@ export const bulkExportTransactions = async (req, res) => {
       // CRITICAL: Update transactions with the bulkExport._id to lock them
       // This is idempotent - only grabs SUCCESS transactions with pending delivery that don't have an exportId yet
       const updateResult = await Transaction.updateMany(
-        { 
+        {
           _id: { $in: transactionIds },
           status: 'success', // CRITICAL: Only successful transactions
           deliveryStatus: 'pending',
@@ -590,7 +608,7 @@ export const bulkExportTransactions = async (req, res) => {
             { exportId: null }
           ]
         },
-        { 
+        {
           deliveryStatus: 'processing',
           exportedAt: new Date(),
           exportId: bulkExport._id // Lock with real ObjectId
@@ -604,10 +622,10 @@ export const bulkExportTransactions = async (req, res) => {
       if (updateResult.modifiedCount === 0) {
         // Clean up the unused export record
         await BulkExport.deleteOne({ _id: bulkExport._id }, { session });
-        
+
         await session.abortTransaction();
         session.endSession();
-        
+
         return res.status(200).json({
           success: true,
           message: 'All pending transactions are already being processed or exported',
@@ -618,7 +636,7 @@ export const bulkExportTransactions = async (req, res) => {
 
       // Use the actual modified count
       const actualCount = updateResult.modifiedCount;
-      
+
       // Warn if race condition occurred
       if (actualCount !== pendingTransactions.length) {
         console.warn(
@@ -629,21 +647,21 @@ export const bulkExportTransactions = async (req, res) => {
 
       // Get the actual transaction IDs that were successfully locked
       const lockedTransactions = await Transaction.find(
-        { 
+        {
           _id: { $in: transactionIds },
           exportId: bulkExport._id
         },
         { _id: 1 }
       )
-      .session(session)
-      .lean();
+        .session(session)
+        .lean();
 
       const actualTransactionIds = lockedTransactions.map(t => t._id);
 
       // Update the bulk export with actual data
       await BulkExport.updateOne(
         { _id: bulkExport._id },
-        { 
+        {
           transactionIds: actualTransactionIds,
           count: actualCount
         },
@@ -672,13 +690,13 @@ export const bulkExportTransactions = async (req, res) => {
       // Handle write conflicts with retry
       if (error.code === 112 && error.codeName === 'WriteConflict' && retryCount < maxRetries - 1) {
         console.log(`⚠️ Write conflict detected, retrying... (attempt ${retryCount + 1}/${maxRetries})`);
-        
+
         // Abort transaction if still active
         if (session.inTransaction()) {
           await session.abortTransaction();
         }
         session.endSession();
-        
+
         retryCount++;
         // Small delay before retry
         await new Promise(resolve => setTimeout(resolve, 50 * retryCount));
@@ -690,12 +708,12 @@ export const bulkExportTransactions = async (req, res) => {
         await session.abortTransaction();
       }
       session.endSession();
-      
+
       console.error('Error in bulk export:', error);
-      
-      return res.status(500).json({ 
-        success: false, 
-        error: error.message 
+
+      return res.status(500).json({
+        success: false,
+        error: error.message
       });
     }
   }
@@ -762,7 +780,7 @@ export const bulkMarkDelivered = async (req, res) => {
     // Update all transactions to delivered
     const updateResult = await Transaction.updateMany(
       { _id: { $in: bulkExport.transactionIds } },
-      { 
+      {
         deliveryStatus: 'delivered',
         deliveredAt: new Date()
       }

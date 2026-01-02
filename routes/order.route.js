@@ -11,7 +11,7 @@ const orderRouter = Router();
 // Public endpoint - no auth needed
 
 orderRouter.get('/track', generalLimiter, trackOrdersByPhone);
-orderRouter.get('/track/:transactionId', generalLimiter, trackOrderById);
+// orderRouter.get('/track/:transactionId', lenientLimiter, trackOrderById);
 
 
 export default orderRouter;

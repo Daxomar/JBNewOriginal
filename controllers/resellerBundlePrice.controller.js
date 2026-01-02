@@ -26,6 +26,8 @@ export const getBundlesByResellerCode = async (req, res) => {
     const codeToUse = resellerCode || SYSTEM_RESELLER_CODE;
 
 
+   
+
     // Find reseller by code
     const reseller = await User.findOne({ 
       resellerCode: codeToUse,
@@ -36,13 +38,14 @@ export const getBundlesByResellerCode = async (req, res) => {
     });
 
 
+    
+
     if (!reseller) {
       return res.status(404).json({ 
         success: false,
         message: 'Reseller not found' 
       });
     }
-
     // Get all active bundles
     const bundles = await Bundle.find({ isActive: true });
 
