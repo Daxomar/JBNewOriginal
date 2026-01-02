@@ -75,7 +75,7 @@ const getAnalytics = async (filter) => {
 
 
 
-    const PAYSTACK_FEE = 0.02; // 1.5% Paystack fee constant
+    const PAYSTACK_FEE = 0.03; // 1.5% Paystack fee constant
 
 
     // Calculate totals
