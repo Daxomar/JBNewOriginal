@@ -49,7 +49,6 @@ export const getBundlesByResellerCode = async (req, res) => {
     // Get all active bundles
     const bundles = await Bundle.find({ isActive: true }).sort({ network: 1, JBCP: 1 });
 
-    console.log("Bundles finally sorted out", bundles)
 
     // Get reseller's custom prices
     const customPrices = await ResellerBundlePrice.find({ 
