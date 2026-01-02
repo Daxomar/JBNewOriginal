@@ -711,13 +711,13 @@ export const approveReseller = async (req, res) => {
 
 
     // Send approved email notification
-    sendApprovedEmail({
-      to: user.email,
-      userName: user.name,
-      loginUrl: `${process.env.FRONTEND_URL}/auth/login`
-    }).catch(err => {
-  console.error("Failed to send Approval Email :", err);
-});;
+//     sendApprovedEmail({
+//       to: user.email,
+//       userName: user.name,
+//       loginUrl: `${process.env.FRONTEND_URL}/auth/login`
+//     }).catch(err => {
+//   console.error("Failed to send Approval Email :", err);
+// });;
 
     return res.status(200).json({
       success: true,

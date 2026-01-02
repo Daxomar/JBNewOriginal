@@ -258,7 +258,7 @@ export const generateInviteEmailTemplate = ({
 //APPROVAL EMAIL TEMPLATE
 export const generateApprovedEmailTemplate = ({
   userName,
-  loginUrl 
+  loginUrl = "https://www.joydatabundle.com/auth/login"
 }) => `
 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; background-color: #f0f6ff; padding: 20px;">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);">
