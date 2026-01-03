@@ -82,7 +82,7 @@ const getAnalytics = async (filter) => {
     const totalRevenue = revenueData[0]?.totalRevenue || 0;
     const totalOrders = ordersData || 0;
     const totalJBProfit = profitData[0]?.totalJBProfit || 0;
-    const developersProfit = totalJBProfit * 0.20 || 0; // 20% of JBProfit
+    const developersProfit = totalJBProfit * 0.26 || 0; // 20% of JBProfit
     const activeOrders = activeOrdersData || 0;
     const processingOrders = processingOrdersData || 0;
     const deliveredOrders = deliveredOrderData || 0; 
