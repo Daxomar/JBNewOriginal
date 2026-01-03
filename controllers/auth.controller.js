@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken';
 import User from "../models/user.model.js";
-import { JWT_EXPIRES_IN, JWT_SECRET, JWT_REFRESH_SECRET } from "../config/env.js";
+import { JWT_EXPIRES_IN, JWT_SECRET, JWT_REFRESH_SECRET, NODE_ENV } from "../config/env.js";
 // import { sendWelcomeEmail, sendOTPEmail } from "../utils/send-email.js";
 import { sendWelcomeEmail, sendOTPEmail } from "../services/emailServices/email.service.js";
 import { generateTokens } from '../utils/token_util.js';  ///NEW IMPORT
@@ -19,14 +19,14 @@ export const signUp = async (req, res, next) => {
 
 
     // So that we don't have to send empty details to the server
-  const { name, email,phoneNumber,password  } = req.body;
+    const { name, email, phoneNumber, password } = req.body;
 
-if (!name || !email || !password || !phoneNumber) {
-  return res.json({
-    success: false,
-    message: "Missing details, please provide them all"
-  });
-}
+    if (!name || !email || !password || !phoneNumber) {
+        return res.json({
+            success: false,
+            message: "Missing details, please provide them all"
+        });
+    }
 
 
 
@@ -41,7 +41,7 @@ if (!name || !email || !password || !phoneNumber) {
         }
 
 
-        const existingPhoneNumber = await User.findOne({ phoneNumber });    
+        const existingPhoneNumber = await User.findOne({ phoneNumber });
 
         if (existingPhoneNumber) {
             const error = new Error('Phone number already exists')
@@ -68,14 +68,14 @@ if (!name || !email || !password || !phoneNumber) {
             name: newUsers[0].name,
             email: newUsers[0].email,
             phoneNumber: newUsers[0].phoneNumber,
-            role:'user' ,// Always set to 'user', ignore req.body.role
+            role: 'user',// Always set to 'user', ignore req.body.role
             isAccountVerified: newUsers[0].isAccountVerified,
             createdAt: newUsers[0].createdAt,
         };
 
 
         const tokens = generateTokens(newUsers[0])
-        newUsers[0].accessToken = tokens.accessToken; 
+        newUsers[0].accessToken = tokens.accessToken;
         newUsers[0].refreshToken = tokens.refreshToken;
 
 
@@ -88,37 +88,56 @@ if (!name || !email || !password || !phoneNumber) {
         //     maxAge: 1000 * 60 * 60 * 24 * 7, //1 week 
         // })
 
-                // // store access token in cookie (short-lived)
+        //         // // store access token in cookie (short-lived)
+        // res.cookie('token', tokens.accessToken, {
+        //     httpOnly: true,
+        //     secure: true, //only send cookie over https
+        //     sameSite: 'none',    // more look into this later!!!!!!
+        //     maxAge: 1000 * 60 * 60, //1h
+        // });
+
+
+        //      // // store refresh token in cookie (long-lived)
+        // res.cookie('refreshToken', tokens.refreshToken, {
+        //     httpOnly: true,
+        //     secure: true, //only send cookie over https!!!
+        //     sameSite: 'none',    // more look into this later!!!
+        //     maxAge: 1000 * 60 * 60 * 24 * 7, //1 week
+        // });
+
+
+        const isProduction = NODE_ENV === 'production';
+
+        // Set cookies
         res.cookie('token', tokens.accessToken, {
             httpOnly: true,
-            secure: true, //only send cookie over https
-            sameSite: 'none',    // more look into this later!!!!!!
-            maxAge: 1000 * 60 * 60, //1h
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'lax',
+            domain: isProduction ? '.joydatabundle.com' : undefined,
+            maxAge: 1000 * 60 * 60,
+            path: '/',
         });
 
-
-             // // store refresh token in cookie (long-lived)
         res.cookie('refreshToken', tokens.refreshToken, {
             httpOnly: true,
-            secure: true, //only send cookie over https!!!
-            sameSite: 'none',    // more look into this later!!!
-            maxAge: 1000 * 60 * 60 * 24 * 7, //1 week
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'lax',
+            domain: isProduction ? '.joydatabundle.com' : undefined,
+            maxAge: 1000 * 60 * 60 * 24 * 7,
+            path: '/',
         });
-
-
-
 
 
 
 
 
         // Sends the welcome email 
-         sendWelcomeEmail({
+        sendWelcomeEmail({
             to: email,
             userName: name
         }).catch(err => {
-  console.error("Failed to send welcome email (JS:120 AC):", err);
-});
+            console.error("Failed to send welcome email (JS:120 AC):", err);
+        });
 
         //Send The response
         res.status(201).json({
@@ -187,21 +206,47 @@ export const signIn = async (req, res, next) => {
         await user.save(); //save the user with the new tokens
 
 
-        // // store access token in cookie (short-lived)
+
+        //TRYING TO FIX SAFARI LOGIN ISSUE
+
+        // // // store access token in cookie (short-lived)
+        // res.cookie('token', tokens.accessToken, {
+        //     httpOnly: true,
+        //     secure: true, //only send cookie over https
+        //     sameSite: 'none',    // more look into this later!!!!!!
+        //     maxAge: 1000 * 60 * 60, //1h
+        // });
+
+
+        // // // store refresh token in cookie (long-lived)
+        // res.cookie('refreshToken', tokens.refreshToken, {
+        //     httpOnly: true,
+        //     secure: true, //only send cookie over https
+        //     sameSite: 'none',    // more look into this later!!!!!!
+        //     maxAge: 1000 * 60 * 60 * 24 * 7, //1 week
+        // });
+
+
+
+        const isProduction = NODE_ENV === 'production';
+
+        // Set cookies
         res.cookie('token', tokens.accessToken, {
             httpOnly: true,
-            secure: true, //only send cookie over https
-            sameSite: 'none',    // more look into this later!!!!!!
-            maxAge: 1000 * 60 * 60, //1h
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'lax',
+            domain: isProduction ? '.joydatabundle.com' : undefined,
+            maxAge: 1000 * 60 * 60,
+            path: '/',
         });
 
-
-        // // store refresh token in cookie (long-lived)
         res.cookie('refreshToken', tokens.refreshToken, {
             httpOnly: true,
-            secure: true, //only send cookie over https
-            sameSite: 'none',    // more look into this later!!!!!!
-            maxAge: 1000 * 60 * 60 * 24 * 7, //1 week
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'lax',
+            domain: isProduction ? '.joydatabundle.com' : undefined,
+            maxAge: 1000 * 60 * 60 * 24 * 7,
+            path: '/',
         });
 
 
@@ -285,31 +330,51 @@ export const signOut = async (req, res, next) => {
 
         const userId = req.user.id
 
-       // Invalidate tokens in database if user exists
-    if (userId) {
-      await User.findByIdAndUpdate(
-        userId,
-        {
-          $set: {
-            refreshToken: null,
-            accessToken: null
-          }
-        },
-        { new: true }
-      );
-    }
+        // Invalidate tokens in database if user exists
+        if (userId) {
+            await User.findByIdAndUpdate(
+                userId,
+                {
+                    $set: {
+                        refreshToken: null,
+                        accessToken: null
+                    }
+                },
+                { new: true }
+            );
+        }
+
+        // res.clearCookie('token', {
+        //     httpOnly: true,
+        //     secure: true,
+        //     sameSite: 'none'
+        // });
+
+        // res.clearCookie('refreshToken', {
+        //     httpOnly: true,
+        //     secure: true,
+        //     sameSite: 'none'
+        // })
+
 
         res.clearCookie('token', {
             httpOnly: true,
             secure: true,
-            sameSite: 'none'
+            sameSite: 'none',
+            domain: ".joydatabundle.com",
+            path: "/",
         });
 
         res.clearCookie('refreshToken', {
             httpOnly: true,
             secure: true,
-            sameSite: 'none'
+            sameSite: 'none',
+            domain: ".joydatabundle.com",
+            path: "/",
         })
+
+
+
 
         return res.json({ success: true, message: "Sign out successful" });
 
@@ -351,7 +416,10 @@ export const sendVerifyOtp = async (req, res, next) => {
             expiryMinutes: 10,
         });
 
+
+
         res.json({ success: true, message: 'Verification OTP email sent successfully' })
+
 
 
     } catch (error) {
@@ -431,47 +499,47 @@ export const verifyEmail = async (req, res, next) => {
 //CHECK IF USER IS AUTHENTICATED
 export const isAuthenicated = async (req, res) => {
     try {
-    // req.user is set by protect middleware
-    // It already verified the JWT token exists and is valid
-    
-    const {id} = req.user
-    // Get full user data from database (fresher than JWT payload)
-    const user = await User.findById(id).select('-password');
+        // req.user is set by protect middleware
+        // It already verified the JWT token exists and is valid
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
+        const { id } = req.user
+        // Get full user data from database (fresher than JWT payload)
+        const user = await User.findById(id).select('-password');
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+
+
+
+
+
+        // Return user data (this is what AuthContext will use)
+        return res.json({
+            success: true,
+            message: 'User is authenticated and still has valid session',
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                isAccountVerified: user.isAccountVerified,
+                createdAt: user.createdAt,
+            }
+        });
+
+    } catch (error) {
+        console.error('Verify auth error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Server error during authentication verification',
+            error: error.message
+        });
     }
-
-
-    
- 
-
-
-    // Return user data (this is what AuthContext will use)
-    return res.json({
-      success: true,
-      message: 'User is authenticated and still has valid session',
-      user: {
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            isAccountVerified: user.isAccountVerified,
-            createdAt: user.createdAt,
-      }
-    });
-
-  } catch (error) {
-    console.error('Verify auth error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Server error during authentication verification',
-      error: error.message
-    });
-  }
 };
 
 
