@@ -27,7 +27,7 @@ resellerBundlePriceRouter.get('/public/:resellerCode', generalLimiter, getBundle
 resellerBundlePriceRouter.get('/pricing', protect, generalLimiter, getResellerPricing);
 
 // Set custom price for single bundle - authenticated, strict limit (write operation)
-resellerBundlePriceRouter.post('/pricing/set', protect, strictLimiter, setCustomPrice);
+resellerBundlePriceRouter.post('/pricing/set', protect, generalLimiter, setCustomPrice);
 
 
 export default resellerBundlePriceRouter;       
