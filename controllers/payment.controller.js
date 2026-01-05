@@ -102,7 +102,6 @@ export async function initializePayment(req, res) {
         }
 
 
-
         // Check if bundle is active
         if (!bundle.isActive) {
             return res.status(400).json({
@@ -290,7 +289,7 @@ export async function verifyPayment(req, res) {
         }
 
         const { data } = await paystack.get(`/transaction/verify/${encodeURIComponent(reference)}`);
-        console.log(data)
+        console.log("✅Verification Successful")
         // data contains status, message, data (transaction object)
         return res.status(200).json(data);
     } catch (err) {

@@ -19,7 +19,7 @@ export const getReseller = async (req, res, next) => {
 
     const { id } = req.user
 
-    console.log("this is what i am currently debugging", id);
+   
     const user = await User.findById(id).select('-password');
 
     // const user = await User.findById(req.params.id).select('-password'); // brings eveything out aside from the password of a user
@@ -232,7 +232,7 @@ export const getResellers = async (req, res, next) => {
 
     const { id, email, role } = req.user;
 
-    console.log("Admin fetching resellers, ID:", id);
+    
 
     // Pagination setup
     const page = parseInt(req.query.page) || 1;
