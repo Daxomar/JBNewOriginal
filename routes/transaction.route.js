@@ -6,7 +6,8 @@ import {
     bulkExportTransactions, 
     getBulkExportTransactions, 
     bulkMarkDelivered, 
-    getAllBulkExports
+    getAllBulkExports,
+    updateDeliveryStatus
 
  } from '../controllers/transaction.controller.js';
 
@@ -32,5 +33,10 @@ transactionRouter.patch('/bulk-export/:exportId/mark-delivered', protect, author
 
 // Get all transactions - GENERAL (read-only, admin)
 transactionRouter.get('/', protect, authorizeRoles("admin"), lenientLimiter, getTransactions);
+
+
+
+// Update delivery status
+transactionRouter.patch('/:transactionId/delivery', protect, authorizeRoles("admin"), lenientLimiter, updateDeliveryStatus);
 
 export default transactionRouter;
