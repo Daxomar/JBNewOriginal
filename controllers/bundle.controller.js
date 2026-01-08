@@ -57,7 +57,9 @@ export const createBundleInDb = async (req, res, next) => {
 
 export const getAllBundles = async (req, res, next) => {
   try {
-    const bundles = await Bundle.find();
+    const bundles = await Bundle.find().sort({ network: 1, JBCP: 1 });
+    
+        
 
     const activeCount = bundles.filter(b => b.isActive).length;
     const inactiveCount = bundles.filter(b => !b.isActive).length;
@@ -74,3 +76,8 @@ export const getAllBundles = async (req, res, next) => {
     next(error);
   }
 };
+
+
+
+
+
