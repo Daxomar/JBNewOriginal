@@ -432,7 +432,7 @@ export const bulkExportTransactions = async (req, res) => {
       }
 
       // Validate limit
-      const maxLimit = 10;
+      const maxLimit = 100;
       const parsedLimit = Math.min(Math.max(1, parseInt(limit)), maxLimit);
 
       // Build query - IDEMPOTENCY: Only SUCCESS transactions with pending delivery and no exportId
