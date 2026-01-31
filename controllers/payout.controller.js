@@ -528,6 +528,8 @@ export const processPayout = async (req, res) => {
             payout.processedAt = new Date();
             payout.processedBy = adminId;
             payout.rejectionReason = rejectionReason;
+            payout.transactionReference = rejectionReason;  // Lord forgive me, very temporal fix
+
 
             await payout.save({ session });
 
