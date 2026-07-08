@@ -5,18 +5,14 @@
   "type": "module",
   "scripts": {
     "start": "node app.js",
-       "dev": "nodemon --legacy-watch app.js",
-
-     "seed": "node scripts/seedDB.js"
+    "dev": "nodemon --legacy-watch app.js",
+    "seed": "node scripts/seedDB.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@arcjet/inspect": "^1.0.0-beta.10",
-    "@arcjet/ip": "^1.0.0-beta.15",
-    "@arcjet/node": "^1.0.0-beta.10",
     "@sendgrid/mail": "^8.1.6",
     "@upstash/workflow": "^0.2.17",
     "axios": "^1.13.2",
