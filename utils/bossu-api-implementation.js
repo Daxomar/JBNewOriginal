@@ -109,6 +109,49 @@ export async function createBossuOrder(transaction) {
   }
 }
 
+
+
+export async function createOrderForFailed(transaction) {
+  try {
+    // Transform bundle data (1GB → 1gb)
+    const packageKey = transformBundleToPackageKey(transaction.metadata.bundleData);
+ 
+    const payload = {
+      action: 'create_order',
+      network: transaction.metadata.network,
+      package_key: packageKey,
+      recipient_phone: transaction.metadata.phoneNumberReceivingData,
+      external_reference: transaction.reference,
+      callback_url: BOSSU_CALLBACK_URL,
+    };
+ 
+    const response = await apiRequestWithRetry(BOSSU_API_ENDPOINT, payload);
+ 
+    if (response.data.success) {
+      return response.data; // Return full response with nested data structure
+    } else {
+      console.error('❌ Bossu API error:', response.data.message);
+      throw new Error(`Bossu API Error: ${response.data.message}`);
+    }
+ 
+  } catch (error) {
+    if (error.response) {
+      console.error('❌ Bossu API responded with error:');
+      console.error('Status:', error.response.status);
+      console.error('Message:', error.response.data.message || 'Unknown error');
+      throw new Error(`Bossu API Error (${error.response.status}): ${error.response.data.message}`);
+    } else if (error.request) {
+      console.error('❌ No response from Bossu API');
+      throw new Error('No response from Bossu API - Network issue');
+    } else {
+      console.error('❌ Error creating request:', error.message);
+      throw error;
+    }
+  }
+}
+
+
+
 export async function getBossuBalance(req, res) {
   try {
     const payload = { action: "balance" }
@@ -128,5 +171,6 @@ export async function getBossuBalance(req, res) {
 
 export default {
   createBossuOrder,
-  getBossuBalance
+  getBossuBalance,
+  createOrderForFailed,
 };

@@ -1,6 +1,6 @@
 import Transaction from '../../models/transaction.model.js';
 import BulkExport from '../../models/bulkexport.model.js';
-import { getBossuBalance } from '../../utils/bossu-api-implementation.js';
+import { getBossuBalance, createOrderForFailed } from '../../utils/bossu-api-implementation.js';
 import mongoose from 'mongoose';
 
 
@@ -875,6 +875,84 @@ export const bulkDeliveryMarkerFetch = async (req, res) => {
   }
 };
 
+export const bulkDeliveryMarkerFetchFailed = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+ 
+    // ✅ Validate query parameters exist
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        success: false,
+        message: "startDate and endDate are required query parameters"
+      });
+    }
+ 
+    // ✅ Validate ISO 8601 format and parse
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid date format. Use ISO 8601 (e.g., 2024-05-15T08:00:00.000Z)"
+      });
+    }
+ 
+    // ✅ Validate that end is after start
+    if (start >= end) {
+      return res.status(400).json({
+        success: false,
+        message: "End date must be after start date"
+      });
+    }
+ 
+    // ✅ Fetch transactions matching criteria
+    const transactions = await Transaction.find({
+      status: "success",                    // Only successful transactions
+      deliveryStatus: "failed",         // Only processing ones
+      createdAt: {
+        $gte: start,
+        $lte: end
+      }
+    })
+      .select([
+        '_id',
+        'reference',
+        'email',
+        'amount',
+        'status',
+        'deliveryStatus',
+        'createdAt',
+        'metadata'
+      ])
+      .lean()                               // Return plain JavaScript objects (faster)
+      .sort({ createdAt: -1 });             // Newest first
+ 
+    // ✅ Return response
+    return res.status(200).json({
+      success: true,
+      message: `Found ${transactions.length} transaction(s) in processing status`,
+      response: {
+        data: transactions,
+        meta: {
+          count: transactions.length,
+          timeRange: {
+            start: start.toISOString(),
+            end: end.toISOString()
+          }
+        }
+      }
+    });
+ 
+  } catch (error) {
+    console.error("Error fetching transactions for bulk delivery:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal server error while fetching transactions"
+    });
+  }
+};
+
 
 export const bulkMarkAsDelivered = async (req, res) => {
   try {
@@ -959,3 +1037,179 @@ export const bulkMarkAsDelivered = async (req, res) => {
 };
 
 
+export const bulkMarkFailedAsDelivered = async (req, res) => {
+  try {
+    const { transactionIds } = req.body;
+ 
+    // ✅ Validate input
+    if (!Array.isArray(transactionIds) || transactionIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "transactionIds must be a non-empty array of transaction IDs"
+      });
+    }
+ 
+    // ✅ Validate array size (prevent too large updates)
+    if (transactionIds.length > 1000) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot update more than 1000 transactions at once"
+      });
+    }
+ 
+    // ✅ Convert string IDs to MongoDB ObjectIds
+    let objectIds;
+    try {
+      objectIds = transactionIds.map(id => {
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+          throw new Error(`Invalid transaction ID: ${id}`);
+        }
+        return new mongoose.Types.ObjectId(id);
+      });
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid transaction ID format: ${error.message}`
+      });
+    }
+ 
+    // ✅ Fetch all transactions from DB
+    const transactions = await Transaction.find({
+      _id: { $in: objectIds }
+    });
+ 
+    if (transactions.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No transactions found with the provided IDs"
+      });
+    }
+ 
+    // ✅ Status map for normalizing Bossu responses
+    const statusMap = {
+      'completed': 'delivered',
+      'processing': 'processing',
+      'pending': 'pending',
+      'failed': 'failed'
+    };
+ 
+    // ✅ Process each transaction sequentially with Bossu
+    let successCount = 0;
+    let failureCount = 0;
+
+
+   // 🆕 Track the breakdown by resulting delivery status
+    const statusCounts = {
+      delivered: 0,
+      processing: 0,
+      pending: 0,
+      failed: 0
+    };
+
+ 
+    for (const transaction of transactions) {
+      try {
+        console.log(`Processing transaction ${transaction._id} - Reference: ${transaction.reference}`);
+ 
+        // Call Bossu to sync/create order
+        const bossuResponse = await createOrderForFailed(transaction);
+        const bossuData = bossuResponse.data;
+ 
+        if (bossuResponse.success === true) {
+          const isIdempotent = bossuResponse.message.includes("Existing order returned");
+ 
+          // Normalize Bossu status to our DB enum
+          const normalizedStatus = statusMap[bossuData.status] || bossuData.status;
+ 
+          if (isIdempotent) {
+            // Idempotent response - limited data
+            transaction.bossuResponse = {
+              order_id: bossuData.order_id,
+              status: bossuData.status,
+              price: bossuData.price,
+              created_at: bossuData.created_at,
+              isIdempotent: true
+            };
+          } else {
+            // Fresh order creation - full data
+            transaction.bossuResponse = {
+              order_id: bossuData.order_id,
+              external_reference: bossuData.reference,
+              status: bossuData.status,
+              price: bossuData.price,
+              recipient_phone: bossuData.recipient_phone,
+              network: bossuData.network,
+              package_key: bossuData.package_key,
+              isIdempotent: false
+            };
+          }
+ 
+          // Update transaction with Bossu's actual state
+          transaction.deliveryStatus = normalizedStatus;
+          
+          // Clear any previous errors since this succeeded
+          transaction.bossuError = null;
+ 
+          await transaction.save();
+          successCount++;
+ 
+        // 🆕 Tally the normalized status (guard against unexpected values)
+          if (statusCounts[normalizedStatus] !== undefined) {
+            statusCounts[normalizedStatus]++;
+          } else {
+            statusCounts[normalizedStatus] = 1;
+          }
+
+          console.log(`✅ Successfully synced transaction ${transaction._id} to status: ${normalizedStatus}`);
+        } else {
+          // Bossu returned success: false
+          throw new Error(`Bossu returned unsuccessful response: ${bossuResponse.message}`);
+        }
+ 
+      } catch (bossuError) {
+        // Save error to transaction for tracking
+        transaction.bossuError = {
+          message: bossuError.message,
+          timestamp: new Date(),
+        };
+ 
+        // Mark as failed since we couldn't sync with Bossu
+        transaction.deliveryStatus = 'failed';
+ 
+        await transaction.save();
+        failureCount++;
+        // 🆕 Count sync failures under the 'failed' bucket
+        statusCounts.failed++;
+ 
+        console.log(`❌ Failed to sync transaction ${transaction._id}: ${bossuError.message}`);
+      }
+    }
+ 
+    // ✅ Prepare response
+    return res.status(200).json({
+      success: true,
+      message: `Synced ${successCount} transaction(s) with Bossu`,
+      response: {
+        data: {
+          markedCount: successCount,
+          failedCount: failureCount,
+          totalRequested: transactionIds.length,
+          statusCounts,
+          summary: {
+            timestamp: new Date().toISOString(),
+            message: failureCount > 0
+              ? `${successCount} synced, ${failureCount} failed to sync with Bossu`
+              : `All ${successCount} transactions synced with Bossu`
+          }
+        }
+      }
+    });
+ 
+  } catch (error) {
+    console.error("Error syncing failed transactions with Bossu:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal server error while syncing transactions"
+    });
+  }
+};

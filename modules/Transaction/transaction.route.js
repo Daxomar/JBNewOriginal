@@ -9,7 +9,9 @@ import {
     getAllBulkExports,
     updateDeliveryStatus,
     bulkMarkAsDelivered,
-    bulkDeliveryMarkerFetch
+    bulkDeliveryMarkerFetch,
+    bulkDeliveryMarkerFetchFailed,
+    bulkMarkFailedAsDelivered
 
  } from '../Transaction/transaction.controller.js';
 
@@ -28,6 +30,7 @@ transactionRouter.post('/bulk-export', protect, authorizeRoles("admin"), general
 transactionRouter.get('/bulk-exports/list', protect, authorizeRoles("admin"), generalLimiter, getAllBulkExports);
 
 transactionRouter.get( '/bulk-delivery-marker',protect, authorizeRoles("admin"), generalLimiter, bulkDeliveryMarkerFetch)
+transactionRouter.get( '/bulk-failed-marker',protect, authorizeRoles("admin"), generalLimiter, bulkDeliveryMarkerFetchFailed)
 
 // Get specific bulk export - GENERAL (read-only, admin)
 transactionRouter.get('/bulk-export/:exportId', protect, authorizeRoles("admin"), generalLimiter, getBulkExportTransactions);
@@ -37,6 +40,7 @@ transactionRouter.patch('/bulk-export/:exportId/mark-delivered', protect, author
 
 
 transactionRouter.patch('/bulk-mark-delivered',  protect , authorizeRoles("admin"),lenientLimiter, bulkMarkAsDelivered);
+transactionRouter.patch('/bulk-mark-failed-as-bossustate',  protect , authorizeRoles("admin"),lenientLimiter, bulkMarkFailedAsDelivered);
 
 
 // Get all transactions - GENERAL (read-only, admin)
