@@ -55,6 +55,14 @@ export const requestPayout = async (req, res) => {
         const resellerId = id  //MANUALLY TESTING THIS NOW
         const { amount, network, phoneNumber, accountName, password } = req.body;
 
+        // TEMPORARY PAUSE — remove when refund review is complete.
+        return res.status(503).json({
+            success: false,
+            message:
+                "Payouts are temporarily paused while we review recent transactions. " +
+                "You'll be able to request a payout again shortly — thanks for your patience.",
+        });
+
         // Validation
         if (!amount || !network || !phoneNumber || !accountName || !password) {
             await session.abortTransaction();
@@ -125,7 +133,7 @@ export const requestPayout = async (req, res) => {
         const availableBalance = calculateAvailableBalance(user);
 
 
-        
+
 
         if (availableBalance <= 0) {
             await session.abortTransaction();
@@ -213,9 +221,9 @@ export const getMyPayouts = async (req, res) => {
     try {
 
         const { id } = req.user
-        const resellerId = id 
+        const resellerId = id
 
-      
+
 
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
@@ -231,7 +239,7 @@ export const getMyPayouts = async (req, res) => {
 
         // Get available balance
         const user = await User.findById(resellerId).select('totalCommissionEarned totalCommissionPaidOut');
-    
+
 
         const availableBalance = calculateAvailableBalance(user);
 
@@ -452,7 +460,7 @@ export const processPayout = async (req, res) => {
 
 
     try {
-         const { id } = req.user
+        const { id } = req.user
         const adminId = id   //Manually Testing right now 
         const { payoutId } = req.params;
         const { action, rejectionReason, transactionReference } = req.body;

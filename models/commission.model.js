@@ -48,10 +48,11 @@ const CommissionSchema = new mongoose.Schema({
 
     status: {
         type: String,
-        enum: ["pending", "earned", "paid"],
+        enum: ["pending", "earned", "paid", "refunded"],
         default: "earned",
         // “earned” = after payment success
         // “paid”   = after cashout
+        // “refunded” = after commission is refunded
     },
 
     month: {

@@ -314,3 +314,66 @@ export const generateApprovedEmailTemplate = ({
 `;
 
 
+
+// ---------------------------------------------------------------------------
+// CUSTOMER — refund confirmation (one per transaction)
+// ---------------------------------------------------------------------------
+export const generateCustomerRefundTemplate = ({
+  userName,
+  refundAmount,
+  bundleName,
+  reference,
+  phoneNumber,
+}) => `
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1a1a1a;">
+    <h2 style="color: #0b6b3a;">Refund Processed</h2>
+    <p>Hi ${userName || "there"},</p>
+    <p>We've refunded your recent JoyBundle purchase. The details are below.</p>
+    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+      <tr><td style="padding: 8px 0; color: #666;">Bundle</td><td style="padding: 8px 0; text-align: right;">${bundleName || "—"}</td></tr>
+      <tr><td style="padding: 8px 0; color: #666;">Reference</td><td style="padding: 8px 0; text-align: right;">${reference}</td></tr>
+      <tr><td style="padding: 8px 0; color: #666;">Recipient number</td><td style="padding: 8px 0; text-align: right;">${phoneNumber || "—"}</td></tr>
+      <tr><td style="padding: 12px 0; font-weight: bold; border-top: 1px solid #eee;">Amount refunded</td><td style="padding: 12px 0; text-align: right; font-weight: bold; border-top: 1px solid #eee;">GH₵${Number(refundAmount).toFixed(2)}</td></tr>
+    </table>
+    <p style="color: #666; font-size: 14px;">The refund has been sent to the mobile money account used for payment. It may take a short while to reflect.</p>
+    <p style="color: #666; font-size: 14px;">If you have any questions, just reply to this email.</p>
+    <p>— The JoyBundle Team</p>
+  </div>
+`;
+ 
+
+
+
+// ---------------------------------------------------------------------------
+// RESELLER — payout rejected + commission clawback (one per reseller)
+// ---------------------------------------------------------------------------
+export const generateResellerRefundTemplate = ({
+  resellerName,
+  clawedBack,
+  transactionsRefunded,
+  payoutRejected,
+  availableBalance,
+}) => `
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1a1a1a;">
+    <h2 style="color: #b3261e;">Commission Reverse Notice</h2>
+    <p>Hi ${resellerName || "there"},</p>
+    <p>Some transactions tied to your account have been refunded to customers. As a result, the commissions earned on those sales have been reversed.</p>
+    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+      <tr><td style="padding: 8px 0; color: #666;">Transactions reversed</td><td style="padding: 8px 0; text-align: right;">${transactionsRefunded}</td></tr>
+      <tr><td style="padding: 8px 0; color: #666;">Commission reversed</td><td style="padding: 8px 0; text-align: right;">GH₵${Number(clawedBack).toFixed(2)}</td></tr>
+      <tr><td style="padding: 12px 0; font-weight: bold; border-top: 1px solid #eee;">Available balance</td><td style="padding: 12px 0; text-align: right; font-weight: bold; border-top: 1px solid #eee;">GH₵${Number(availableBalance).toFixed(2)}</td></tr>
+    </table>
+    ${
+      payoutRejected
+        ? `<p style="color: #b3261e;"><strong>Note:</strong> Your pending payout request was rejected as part of this adjustment. You're welcome to submit a new request once your balance reflects the change.</p>`
+        : ""
+    }
+    ${
+      Number(availableBalance) < 0
+        ? `<p style="color: #666; font-size: 14px;">Your balance is currently negative because of these reversals. This will be offset automatically against your future commissions — no action is needed from you.</p>`
+        : ""
+    }
+    <p style="color: #666; font-size: 14px;">If you have any questions about these reversals, please reach out to support.</p>
+    <p>— The JoyBundle Team</p>
+  </div>
+`;

@@ -6,7 +6,9 @@ import {
   generateOTPEmailTemplate, 
   generateTransactionReceiptTemplate, 
   generateInviteEmailTemplate, 
-  generateApprovedEmailTemplate 
+  generateApprovedEmailTemplate,
+  generateCustomerRefundTemplate,
+  generateResellerRefundTemplate,
 } from "../../utils/email-template.js";
 import sgMail from '@sendgrid/mail';
 import { SENDGRID_API_KEY, EMAIL_FROM } from "../../config/env.js";
@@ -160,6 +162,80 @@ export const sendApprovedEmail = async ({ to, userName, loginUrl }) => {
     return { success: true, message: 'Email sent' };
   } catch (error) {
     console.error('Error sending approval email:', error);
+    throw error;
+  }
+};
+
+
+
+
+
+export const sendCustomerRefundEmail = async ({
+  to,
+  userName,
+  refundAmount,
+  bundleName,
+  reference,
+  phoneNumber,
+}) => {
+  if (!to) throw new Error("Email address is required");
+ 
+  const html = generateCustomerRefundTemplate({
+    userName,
+    refundAmount,
+    bundleName,
+    reference,
+    phoneNumber,
+  });
+ 
+  try {
+    await sgMail.send({
+      to,
+      from: EMAIL_FROM,
+      subject: "JoyBundle Refund Processed",
+      html,
+    });
+    console.log(`✅ Refund email sent to ${to} (${reference})`);
+    return { success: true };
+  } catch (error) {
+    console.error(`Error sending customer refund email (${reference}):`, error);
+    throw error;
+  }
+};
+
+
+
+
+
+export const sendResellerRefundNotice = async ({
+  to,
+  resellerName,
+  clawedBack,
+  transactionsRefunded,
+  payoutRejected,
+  availableBalance,
+}) => {
+  if (!to) throw new Error("Email address is required");
+ 
+  const html = generateResellerRefundTemplate({
+    resellerName,
+    clawedBack,
+    transactionsRefunded,
+    payoutRejected,
+    availableBalance,
+  });
+ 
+  try {
+    await sgMail.send({
+      to,
+      from: EMAIL_FROM,
+      subject: "JoyBundle Commission Adjustment",
+      html,
+    });
+    console.log(`✅ Reseller notice sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    console.error(`Error sending reseller refund notice (${to}):`, error);
     throw error;
   }
 };
