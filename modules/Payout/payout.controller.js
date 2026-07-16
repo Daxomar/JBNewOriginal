@@ -55,14 +55,6 @@ export const requestPayout = async (req, res) => {
         const resellerId = id  //MANUALLY TESTING THIS NOW
         const { amount, network, phoneNumber, accountName, password } = req.body;
 
-        // TEMPORARY PAUSE — remove when refund review is complete.
-        return res.status(503).json({
-            success: false,
-            message:
-                "Payouts are temporarily paused while we review recent transactions. " +
-                "You'll be able to request a payout again shortly — thanks for your patience.",
-        });
-
         // Validation
         if (!amount || !network || !phoneNumber || !accountName || !password) {
             await session.abortTransaction();
