@@ -1,6 +1,193 @@
 
+import axios from "axios";
 import Transaction from "../../models/transaction.model.js";
 import BulkExport from "../../models/bulkexport.model.js";
+import SubmittedNumber from "../../models/submittedNumber.model.js"; 
+
+const BOSSU_API_BASEURL = process.env.BOSSU_API_BASEURL || "https://bossudatahub.com";
+const BOSSU_API_KEY = process.env.BOSSU_API_KEY;
+const BOSSU_API_TIMEOUT = Number(process.env.BOSSU_API_TIMEOUT) || 15000;
+ 
+const bossuClient = axios.create({
+  baseURL: BOSSU_API_BASEURL,
+  // timeout: BOSSU_API_TIMEOUT,
+  headers: {
+    "Content-Type": "application/json",
+    "X-API-Key": BOSSU_API_KEY,
+  },
+});
+ 
+const BOSSU_ENDPOINT = "/api.php";
+const MTN_PREFIXES = ["024", "025", "053", "054", "055", "059"];
+
+/** 0546635325 | 233546635325 | +233 54 663 5325 | 546635325  ->  0546635325 */
+function normalizePhone(input) {
+  if (!input) return null;
+ 
+  let digits = String(input).replace(/\D/g, "");
+ 
+  if (digits.startsWith("233")) digits = "0" + digits.slice(3);
+  else if (digits.length === 9) digits = "0" + digits;
+ 
+  return /^0\d{9}$/.test(digits) ? digits : null;
+}
+ 
+function isMtn(phone) {
+  return MTN_PREFIXES.includes(phone.slice(0, 3));
+}
+export const verifyNumberHandler = async (req, res) => {
+  const rawPhone = req.body?.phone || req.query?.phone;
+ 
+  try {
+    console.log("🔍 Verify number request:", rawPhone);
+ 
+    const phone = normalizePhone(rawPhone);
+ 
+    if (!phone) {
+      console.warn("❌ Invalid phone:", rawPhone);
+      return res.status(400).json({
+        success: false,
+        message: "Enter a valid 10-digit Ghana number, e.g. 0546635325",
+      });
+    }
+ 
+    // Non-MTN doesn't need beneficiary approval — no API call needed.
+    if (!isMtn(phone)) {
+      console.log(`ℹ️ ${phone} is not MTN — verification not applicable`);
+      return res.status(200).json({
+        success: true,
+        data: {
+          phone,
+          applicable: false,
+          verified: true,
+          message: "Beneficiary verification only applies to MTN numbers.",
+        },
+      });
+    }
+ 
+    const { data: body } = await bossuClient.post(BOSSU_ENDPOINT, {
+      action: "verify_number",
+      phone: phone,
+    });
+ 
+    const result = body?.data?.results?.[0] || {};
+    const verified = Boolean(result.verified);
+ 
+    console.log(`✅ ${phone} verified=${verified}`);
+ 
+    return res.status(200).json({
+      success: true,
+      data: {
+        phone,
+        applicable: true,
+        verified,
+        message:
+          result.message ||
+          (verified
+            ? "This number is on the verified beneficiary list."
+            : "This number is not on the verified beneficiary list yet."),
+      },
+    });
+  } catch (error) {
+    const status = error.response?.status || 500;
+    const message =
+      error.response?.data?.message ||
+      (error.code === "ECONNABORTED"
+        ? "Verification service timed out"
+        : "Could not verify this number right now");
+ 
+    console.error(`❌ Error verifying ${rawPhone}:`, message);
+ 
+    return res.status(status).json({ success: false, message });
+  }
+};
+
+
+export const submitNumberHandler = async (req, res) => {
+  const rawPhone = req.body?.phone;
+  const resellerCode = (req.body?.resellerCode || "").trim();
+  const note = req.body?.note || "Joy Bundle customer";
+ 
+  try {
+    console.log(`📤 Submit number: ${rawPhone} (reseller: ${resellerCode || "direct"})`);
+ 
+    const phone = normalizePhone(rawPhone);
+ 
+    if (!phone) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter a valid 10-digit Ghana number",
+      });
+    }
+ 
+    if (!isMtn(phone)) {
+      return res.status(400).json({
+        success: false,
+        message: "Only MTN numbers need beneficiary approval",
+      });
+    }
+ 
+    const { data: body } = await bossuClient.post(BOSSU_ENDPOINT, {
+      action: "submit_number",
+      phones: [phone],
+      note,
+    });
+ 
+    const entry = body?.data?.results?.[0] || {};
+    const record = entry.record || {};
+    const alreadyVerified = (body?.data?.skipped_already_verified || 0) > 0;
+ 
+    // Save with the reseller code so they can message this customer later.
+    await SubmittedNumber.findOneAndUpdate(
+      { phone, resellerCode },
+      {
+        $set: {
+          phone,
+          resellerCode,
+          network: record.network || "mtn",
+          status: alreadyVerified ? "verified" : "submitted",
+          providerRecordId: record.id || null,
+          providerMessage: record.provider_message || null,
+          note,
+        },
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+ 
+    console.log(`✅ ${phone} recorded (alreadyVerified: ${alreadyVerified})`);
+ 
+    return res.status(200).json({
+      success: true,
+      data: {
+        phone,
+        alreadyVerified,
+        message: alreadyVerified
+          ? "Good news — this number is already verified. You can buy data for it now."
+          : "Submitted. We'll add this number to the beneficiary list and let you know once it's ready.",
+      },
+    });
+  } catch (error) {
+    // Double-click on the button racing the unique index.
+    if (error.code === 11000) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          phone: normalizePhone(rawPhone),
+          alreadyVerified: false,
+          message: "This number is already queued for approval.",
+        },
+      });
+    }
+ 
+    const status = error.response?.status || 500;
+    const message =
+      error.response?.data?.message || "Could not submit this number right now";
+ 
+    console.error(`❌ Error submitting ${rawPhone}:`, message);
+ 
+    return res.status(status).json({ success: false, message });
+  }
+};
 
 export const bossuWebhookHandler = async (req, res) => {
   try {
@@ -311,4 +498,6 @@ async function handleOrderProcessing(data, res) {
 
 export default {
   bossuWebhookHandler,
+  verifyNumberHandler,
+  submitNumberHandler,
 };
