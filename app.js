@@ -3,7 +3,7 @@ import cookieParser from 'cookie-parser';
 import { PORT } from './config/env.js';
 import cors from 'cors'
 
-
+import axios from 'axios';
 // ME IMPORTING THE EVENT EMITTER
 import { appEmitter } from './Lib/eventEmitter.js';
 
@@ -155,6 +155,18 @@ app.get('/', (req, res) => {
 app.get('/healthz', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+app.get('/check-my-ip', async (req, res) => {
+  try {
+    const response = await axios.get('https://httpbin.org/ip');
+    res.json({ 
+      your_outbound_ip: response.data.origin
+    });
+  } catch (error) {
+    res.json({ error: error.message });
+  }
+});
+
 
 console.log('Server is running on port 5000');
 

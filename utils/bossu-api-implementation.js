@@ -8,11 +8,6 @@ import {
 } from "../config/env.js"
 
 
-// 🔍 ADD THIS DEBUG LOG HERE
-console.log('🔍 BOSSU_API_KEY loaded:', !!BOSSU_API_KEY);
-console.log('🔍 BOSSU_API_KEY length:', BOSSU_API_KEY?.length);
-console.log('🔍 BOSSU_API_BASEURL:', BOSSU_API_BASEURL);
-
 
 const bossuClient = axios.create({
   baseURL: BOSSU_API_BASEURL,
